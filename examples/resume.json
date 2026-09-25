@@ -1,0 +1,145 @@
+{
+  "schemaVersion": "1.0",
+  "metadata": {
+    "id": "demo-resume-001",
+    "title": "Senior Cloud Architect",
+    "updatedAt": "2026-09-25T00:00:00Z"
+  },
+  "profile": {
+    "name": "Alex Morgan",
+    "headline": "Senior Cloud Architect",
+    "email": "alex.morgan@example.com",
+    "phone": "+1 555 010 2040",
+    "location": "Berlin, Germany",
+    "links": [
+      {
+        "label": "LinkedIn",
+        "url": "https://www.linkedin.com/in/alex-morgan"
+      },
+      {
+        "label": "GitHub",
+        "url": "https://github.com/alex-morgan"
+      }
+    ]
+  },
+  "summary": "Senior Cloud Architect with extensive experience designing secure, scalable cloud platforms, infrastructure automation, and DevSecOps solutions.",
+  "experience": [
+    {
+      "id": "experience-001",
+      "company": "Example Cloud Systems",
+      "title": "Senior Cloud Architect",
+      "location": "Berlin, Germany",
+      "startDate": "2022-03",
+      "current": true,
+      "bullets": [
+        "Designed secure multi-account cloud architectures supporting production workloads.",
+        "Implemented infrastructure automation using Terraform and CI/CD pipelines.",
+        "Improved platform reliability through observability, security monitoring, and automated remediation."
+      ]
+    },
+    {
+      "id": "experience-002",
+      "company": "Example Technology Group",
+      "title": "Cloud Infrastructure Engineer",
+      "location": "Munich, Germany",
+      "startDate": "2018-06",
+      "endDate": "2022-02",
+      "current": false,
+      "bullets": [
+        "Built reusable infrastructure modules for cloud environments.",
+        "Automated deployment workflows and infrastructure lifecycle management.",
+        "Implemented cloud security controls and operational monitoring."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "id": "education-001",
+      "institution": "Example Institute of Technology",
+      "degree": "Bachelor of Technology",
+      "field": "Computer Science",
+      "location": "Germany",
+      "startDate": "2010",
+      "endDate": "2014"
+    }
+  ],
+  "projects": [
+    {
+      "id": "project-001",
+      "name": "ResumeForge",
+      "description": "Portable ATS-first resume engineering platform.",
+      "url": "https://github.com/example/resumeforge",
+      "technologies": [
+        "Next.js",
+        "TypeScript",
+        "FastAPI",
+        "Python",
+        "Docker",
+        "Kubernetes"
+      ],
+      "bullets": [
+        "Built a portable resume editor with live preview and structured resume data.",
+        "Implemented local ATS analysis without requiring external resume processing services."
+      ]
+    }
+  ],
+  "skills": {
+    "categories": [
+      {
+        "id": "skills-cloud",
+        "name": "Cloud",
+        "items": [
+          "AWS",
+          "Azure",
+          "Kubernetes"
+        ]
+      },
+      {
+        "id": "skills-infrastructure",
+        "name": "Infrastructure",
+        "items": [
+          "Terraform",
+          "Ansible",
+          "Packer",
+          "Linux"
+        ]
+      },
+      {
+        "id": "skills-security",
+        "name": "Cloud Security",
+        "items": [
+          "IAM",
+          "CloudTrail",
+          "GuardDuty",
+          "Security Hub"
+        ]
+      },
+      {
+        "id": "skills-devops",
+        "name": "DevOps",
+        "items": [
+          "GitHub Actions",
+          "CI/CD",
+          "Docker",
+          "Infrastructure as Code"
+        ]
+      }
+    ]
+  },
+  "certifications": [
+    {
+      "id": "certification-001",
+      "name": "AWS Certified Solutions Architect",
+      "issuer": "Amazon Web Services",
+      "date": "2025"
+    }
+  ],
+  "languages": [
+    {
+      "id": "language-001",
+      "name": "English",
+      "proficiency": "Professional"
+    }
+  ],
+  "customSections": []
+}

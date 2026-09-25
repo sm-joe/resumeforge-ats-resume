@@ -1,0 +1,27 @@
+[project]
+name = "api"
+version = "0.1.0"
+description = "ResumeForge FastAPI backend"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "analyzer",
+    "fastapi>=0.141.1",
+    "playwright>=1.63.0",
+    "python-docx>=1.2.0",
+    "uvicorn>=0.54.0",
+]
+
+[project.scripts]
+api = "resumeforge_api.main:app"
+
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+analyzer = { path = "../analyzer" }
+
+[tool.uv.build-backend]
+module-name = "resumeforge_api"
+module-root = "src"

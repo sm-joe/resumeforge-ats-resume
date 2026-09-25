@@ -1,0 +1,83 @@
+# Git
+.git
+.gitignore
+.github
+
+# Node
+node_modules
+**/node_modules
+.next
+**/.next
+out
+**/out
+dist
+**/dist
+coverage
+**/coverage
+.turbo
+**/.turbo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python
+.venv
+**/.venv
+__pycache__
+**/__pycache__
+*.py[cod]
+**/*.py[cod]
+.pytest_cache
+**/.pytest_cache
+.mypy_cache
+**/.mypy_cache
+.ruff_cache
+**/.ruff_cache
+.coverage
+**/.coverage
+htmlcov
+**/htmlcov
+
+# Environment / secrets
+.env
+**/.env
+.env.*
+**/.env.*
+!.env.example
+!**/.env.example
+
+# IDE / OS
+.vscode
+**/.vscode
+.idea
+**/.idea
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+**/*.tmp
+*.temp
+**/*.temp
+*.log
+**/*.log
+
+# Documentation/tests not required for image builds
+docs
+tests
+**/docs
+**/tests
+
+# Existing build artifacts
+build
+**/build
+.cache
+**/.cache
+
+# Docker artifacts
+Dockerfile.*
+**/Dockerfile.*
+*.tar
+**/*.tar
+*.tar.gz
+**/*.tar.gz
