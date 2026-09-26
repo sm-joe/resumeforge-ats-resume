@@ -5,8 +5,6 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
 from ..export.docx import resume_to_docx
-from ..export.pdf import html_to_pdf
-from ..export.render_html import resume_to_html
 from ..models import Resume
 
 
@@ -45,7 +43,9 @@ def export_word(resume: Resume):
         with open(output_path, "rb") as file:
             content = file.read()
 
-        filename = f"{_safe_filename(resume.metadata.title)}.docx"
+        filename = (
+            f"{_safe_filename(resume.metadata.title)}.docx"
+        )
 
         return StreamingResponse(
             BytesIO(content),
@@ -64,42 +64,4 @@ def export_word(resume: Resume):
         raise HTTPException(
             status_code=500,
             detail=f"Word export failed: {error}",
-        ) from error
-
-
-@router.post("/pdf")
-async def export_pdf(resume: Resume):
-    try:
-        html = resume_to_html(resume)
-
-        with NamedTemporaryFile(
-            suffix=".pdf",
-            delete=False,
-        ) as temporary_file:
-            output_path = temporary_file.name
-
-        await html_to_pdf(
-            html,
-            output_path,
-        )
-
-        with open(output_path, "rb") as file:
-            content = file.read()
-
-        filename = f"{_safe_filename(resume.metadata.title)}.pdf"
-
-        return StreamingResponse(
-            BytesIO(content),
-            media_type="application/pdf",
-            headers={
-                "Content-Disposition": (
-                    f'attachment; filename="{filename}"'
-                )
-            },
-        )
-
-    except Exception as error:
-        raise HTTPException(
-            status_code=500,
-            detail=f"PDF export failed: {error}",
         ) from error

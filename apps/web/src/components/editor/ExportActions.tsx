@@ -12,15 +12,33 @@ export function ExportActions() {
     useState<ExportFormat | null>(null);
   const [error, setError] = useState("");
 
-  const handleExport = async (
-    format: ExportFormat,
-  ) => {
-    setExporting(format);
+  const handlePdfExport = () => {
+    setError("");
+    setExporting("pdf");
+
+    const handleAfterPrint = () => {
+      setExporting(null);
+      window.removeEventListener(
+        "afterprint",
+        handleAfterPrint,
+      );
+    };
+
+    window.addEventListener(
+      "afterprint",
+      handleAfterPrint,
+    );
+
+    window.print();
+  };
+
+  const handleWordExport = async () => {
+    setExporting("word");
     setError("");
 
     try {
       const response = await fetch(
-        `/api/export/${format}`,
+        "/api/export/word",
         {
           method: "POST",
           headers: {
@@ -31,9 +49,9 @@ export function ExportActions() {
       );
 
       if (!response.ok) {
-        const payload = await response.json().catch(
-          () => null,
-        );
+        const payload = await response
+          .json()
+          .catch(() => null);
 
         throw new Error(
           payload?.detail ||
@@ -55,15 +73,20 @@ export function ExportActions() {
 
       const filename =
         filenameMatch?.[1] ||
-        `${state.resume.metadata.title || "resumeforge-resume"}.${
-          format === "pdf" ? "pdf" : "docx"
-        }`;
+        `${
+          state.resume.metadata.title ||
+          "resumeforge-resume"
+        }.docx`;
 
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
+      const url =
+        URL.createObjectURL(blob);
+
+      const anchor =
+        document.createElement("a");
 
       anchor.href = url;
       anchor.download = filename;
+
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
@@ -73,7 +96,7 @@ export function ExportActions() {
       setError(
         exportError instanceof Error
           ? exportError.message
-          : "Export failed.",
+          : "Word export failed.",
       );
     } finally {
       setExporting(null);
@@ -91,7 +114,7 @@ export function ExportActions() {
     >
       <button
         type="button"
-        onClick={() => handleExport("pdf")}
+        onClick={handlePdfExport}
         disabled={exporting !== null}
         style={{
           padding: "9px 14px",
@@ -105,17 +128,18 @@ export function ExportActions() {
             exporting !== null
               ? "not-allowed"
               : "pointer",
-          opacity: exporting !== null ? 0.65 : 1,
+          opacity:
+            exporting !== null ? 0.65 : 1,
         }}
       >
         {exporting === "pdf"
-          ? "Exporting PDF..."
+          ? "Preparing PDF..."
           : "Export PDF"}
       </button>
 
       <button
         type="button"
-        onClick={() => handleExport("word")}
+        onClick={handleWordExport}
         disabled={exporting !== null}
         style={{
           padding: "9px 14px",
@@ -129,7 +153,8 @@ export function ExportActions() {
             exporting !== null
               ? "not-allowed"
               : "pointer",
-          opacity: exporting !== null ? 0.65 : 1,
+          opacity:
+            exporting !== null ? 0.65 : 1,
         }}
       >
         {exporting === "word"

@@ -1,0 +1,14 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: resumeforge-web
+  namespace: resumeforge
+  labels:
+    app.kubernetes.io/name: resumeforge-web
+    app.kubernetes.io/component: web
+    app.kubernetes.io/part-of: resumeforge
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: resumeforge-web

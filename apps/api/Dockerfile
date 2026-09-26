@@ -5,21 +5,19 @@ FROM python:3.13-slim-bookworm AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app/apps/api/src \
-    PLAYWRIGHT_BROWSERS_PATH=0
+    PYTHONPATH=/app/apps/api/src
 
 WORKDIR /app
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        curl \
         ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy uv binaries safely
+# Copy uv binaries
 COPY --from=ghcr.io/astral-sh/uv:0.12.19 /uv /uvx /usr/local/bin/
 
-# Copy API metadata & source
+# Copy API metadata
 COPY apps/api/pyproject.toml ./apps/api/pyproject.toml
 COPY apps/api/README.md ./apps/api/README.md
 
@@ -27,26 +25,20 @@ COPY apps/api/README.md ./apps/api/README.md
 COPY apps/analyzer/pyproject.toml ./apps/analyzer/pyproject.toml
 COPY apps/analyzer/src ./apps/analyzer/src
 
-# FIX: Force uv to look directly at the api subproject target as a self-contained installation 
+# Install API dependencies without installing the API project itself.
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync \
     --directory /app/apps/api \
     --no-dev \
     --no-install-project
 
-# Application source after dependencies.
-COPY apps/api/src ./apps/api/src
-COPY apps/analyzer/src ./apps/analyzer/src
-
+# Install the local analyzer package into the API virtual environment.
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install \
         --python /app/apps/api/.venv/bin/python \
         /app/apps/analyzer
 
-# Install Chromium for PDF generation
-RUN mkdir -p /ms-playwright \
-    && /app/apps/api/.venv/bin/python -m playwright install --with-deps chromium
-
+# Copy application source after dependencies for better layer caching.
 COPY apps/api/src ./apps/api/src
 
 
@@ -56,43 +48,28 @@ FROM python:3.13-slim-bookworm AS runner
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app/apps/api/src \
-    PLAYWRIGHT_BROWSERS_PATH=0 \
     PATH="/app/apps/api/.venv/bin:$PATH"
 
-# Set explicit working directory to the app root context
 WORKDIR /app
 
-# Runtime system libraries required by Chromium headless execution
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        ca-certificates \
-        libnss3 \
-        libatk-bridge2.0-0 \
-        libdrm2 \
-        libxkbcommon0 \
-        libxcomposite1 \
-        libxdamage1 \
-        libxfixes3 \
-        libxrandr2 \
-        libgbm1 \
-        libasound2 \
-        libcups2 \
-        libatspi2.0-0 \
-        libgtk-3-0 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Create secure low-privilege runtime group/user setup first
+# Create a dedicated non-root runtime user.
 RUN groupadd --system --gid 10001 resumeforge \
-    && useradd --system --uid 10001 --gid resumeforge resumeforge \
-    && chown -R resumeforge:resumeforge /app
+    && useradd --system --uid 10001 --gid resumeforge resumeforge
 
-# Copy the built virtual environment and playwright binaries with correct user ownership
-COPY --from=builder --chown=resumeforge:resumeforge /app/apps/api/.venv /app/apps/api/.venv
-COPY --from=builder --chown=resumeforge:resumeforge /ms-playwright /ms-playwright
+# Copy the API virtual environment.
+COPY --from=builder --chown=resumeforge:resumeforge \
+    /app/apps/api/.venv \
+    /app/apps/api/.venv
 
-# Copy source environments with matching workspace structures
-COPY --from=builder --chown=resumeforge:resumeforge /app/apps/api/src /app/apps/api/src
-COPY --from=builder --chown=resumeforge:resumeforge /app/apps/analyzer/src /app/apps/analyzer/src
+# Copy API source.
+COPY --from=builder --chown=resumeforge:resumeforge \
+    /app/apps/api/src \
+    /app/apps/api/src
+
+# Copy analyzer source.
+COPY --from=builder --chown=resumeforge:resumeforge \
+    /app/apps/analyzer/src \
+    /app/apps/analyzer/src
 
 USER resumeforge
 
@@ -101,6 +78,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')" || exit 1
 
-# Execute from the app's internal src scope where python can resolve modules correctly
-WORKDIR /app/apps/api/src
 CMD ["uvicorn", "resumeforge_api.main:app", "--host", "0.0.0.0", "--port", "8000"]

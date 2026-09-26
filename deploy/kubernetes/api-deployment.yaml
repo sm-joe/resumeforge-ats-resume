@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resumeforge-api
+  namespace: resumeforge
+  labels:
+    app.kubernetes.io/name: resumeforge-api
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: resumeforge
+spec:
+  replicas: 1
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+
+  revisionHistoryLimit: 3
+  progressDeadlineSeconds: 600
+
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: resumeforge-api
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: resumeforge-api
+        app.kubernetes.io/component: api
+        app.kubernetes.io/part-of: resumeforge
+
+    spec:
+      serviceAccountName: resumeforge
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+
+      containers:
+        - name: api
+          image: resumeforge-api:local
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+
+          env:
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+
+            - name: PYTHONUNBUFFERED
+              value: "1"
+
+            - name: PYTHONPATH
+              value: "/app/apps/api/src"
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            failureThreshold: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3

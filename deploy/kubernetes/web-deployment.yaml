@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resumeforge-web
+  namespace: resumeforge
+  labels:
+    app.kubernetes.io/name: resumeforge-web
+    app.kubernetes.io/component: web
+    app.kubernetes.io/part-of: resumeforge
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+
+  revisionHistoryLimit: 3
+  progressDeadlineSeconds: 600
+
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: resumeforge-web
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: resumeforge-web
+        app.kubernetes.io/component: web
+        app.kubernetes.io/part-of: resumeforge
+
+    spec:
+      serviceAccountName: resumeforge
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+
+      containers:
+        - name: web
+          image: resumeforge-web:local
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+
+          env:
+            - name: NODE_ENV
+              value: "production"
+
+            - name: RESUMEFORGE_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: resumeforge-config
+                  key: RESUMEFORGE_API_URL
+
+            - name: NEXT_TELEMETRY_DISABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: resumeforge-config
+                  key: NEXT_TELEMETRY_DISABLED
+
+            - name: PORT
+              value: "3000"
+
+            - name: HOSTNAME
+              value: "0.0.0.0"
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 1001
+            runAsGroup: 1001
+
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3
