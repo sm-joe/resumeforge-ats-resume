@@ -226,11 +226,29 @@ export function ResumeWorkspace() {
           }}
         >
           <div>
-            <p className="rf-eyebrow">
+            <p className="rf-eyebrow"
+               style={{
+                margin: "0 0 4px",
+                color: "#344054",
+                fontSize: "22px",
+                fontWeight: 800,
+                letterSpacing: "0.04em",
+                lineHeight: 1.15,
+               }}
+            >
               ResumeForge
             </p>
 
-            <h1 className="rf-title">
+            <h1 className="rf-title"
+                style={{
+                  margin: 0,
+                  color: "#667085",
+                  fontSize: "18px",
+                  fontWeight: 600,
+                  letterSpacing: "-0.01em",
+                  lineHeight: 1.3,
+                }}
+              >
               Build your ATS-friendly Resume
             </h1>
 
