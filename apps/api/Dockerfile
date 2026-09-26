@@ -6,7 +6,7 @@ FROM python:3.13-slim-bookworm AS builder
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app/apps/api/src \
-    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+    PLAYWRIGHT_BROWSERS_PATH=0
 
 WORKDIR /app
 
@@ -25,20 +25,29 @@ COPY apps/api/README.md ./apps/api/README.md
 
 # Copy local shared analyzer dependency
 COPY apps/analyzer/pyproject.toml ./apps/analyzer/pyproject.toml
+COPY apps/analyzer/src ./apps/analyzer/src
 
 # FIX: Force uv to look directly at the api subproject target as a self-contained installation 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync \
-    --project /app/apps/api \
-    --no-dev
+    --directory /app/apps/api \
+    --no-dev \
+    --no-install-project
 
 # Application source after dependencies.
 COPY apps/api/src ./apps/api/src
 COPY apps/analyzer/src ./apps/analyzer/src
 
-# Install Chromium for PDF generation
 RUN --mount=type=cache,target=/root/.cache/uv \
-     /app/apps/api/.venv/bin/python -m playwright install --with-deps chromium
+    uv pip install \
+        --python /app/apps/api/.venv/bin/python \
+        /app/apps/analyzer
+
+# Install Chromium for PDF generation
+RUN mkdir -p /ms-playwright \
+    && /app/apps/api/.venv/bin/python -m playwright install --with-deps chromium
+
+COPY apps/api/src ./apps/api/src
 
 
 # --- STAGE 2: Runner ---
@@ -47,7 +56,7 @@ FROM python:3.13-slim-bookworm AS runner
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app/apps/api/src \
-    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+    PLAYWRIGHT_BROWSERS_PATH=0 \
     PATH="/app/apps/api/.venv/bin:$PATH"
 
 # Set explicit working directory to the app root context
@@ -75,8 +84,7 @@ RUN apt-get update \
 # Create secure low-privilege runtime group/user setup first
 RUN groupadd --system --gid 10001 resumeforge \
     && useradd --system --uid 10001 --gid resumeforge resumeforge \
-    && chown -R resumeforge:resumeforge /app \
-    && chown -R resumeforge:resumeforge /ms-playwright
+    && chown -R resumeforge:resumeforge /app
 
 # Copy the built virtual environment and playwright binaries with correct user ownership
 COPY --from=builder --chown=resumeforge:resumeforge /app/apps/api/.venv /app/apps/api/.venv

@@ -1,1 +1,1 @@
-"""ResumeForge FastAPI backend."""
+"""ResumeForge FastAPI application package."""
