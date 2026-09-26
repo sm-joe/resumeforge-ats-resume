@@ -1442,6 +1442,12 @@ label > span {
 
   }
 
+  @media print {
+  .rf-print-sheet .rf-preview-section > div {
+    margin-bottom: 12px !important;
+  }
+}
+
   .rf-modern-header {
 
     border-bottom-color: #24312d;
@@ -2622,6 +2628,22 @@ label > span {
   margin-bottom: 0;
 }
 
+.rf-preview-section .rf-rich-text-content {
+  margin: 0;
+  color: #394542;
+  font-size: 13px;
+  line-height: 1.6;
+  font-family: inherit;
+}
+
+.rf-preview-section .rf-rich-text-content p {
+  margin: 0;
+  color: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  font-family: inherit;
+}
+
 /* =========================================================
    PRINT EXPORT
    ========================================================= */
@@ -2685,17 +2707,6 @@ label > span {
     page-break-inside: auto;
   }
 
-  /*
-   * Keep headings with the content immediately following them.
-   */
-  .rf-print-sheet h1,
-  .rf-print-sheet h2,
-  .rf-print-sheet h3,
-  .rf-print-sheet h4 {
-    break-after: avoid;
-    page-break-after: avoid;
-  }
-
   .rf-print-sheet ul,
   .rf-print-sheet ol {
     break-inside: auto;
@@ -2705,6 +2716,10 @@ label > span {
 @media print {
   .rf-print-sheet .rf-resume-preview-header {
     text-align: center;
+  }
+
+  .rf-print-sheet .rf-preview-section {
+    margin-top: 18px !important;
   }
 
   .rf-print-sheet .rf-preview-name,
@@ -2717,5 +2732,19 @@ label > span {
     width: 100%;
     justify-content: center;
     text-align: center;
+  }
+}
+
+@media print {
+  .rf-print-sheet {
+    padding: 12mm 17mm !important;
+  }
+
+  .rf-print-sheet .rf-preview-section {
+    margin-top: 18px !important;
+  }
+
+  .rf-print-sheet .rf-preview-section > div {
+    margin-bottom: 12px !important;
   }
 }

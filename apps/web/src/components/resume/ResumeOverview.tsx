@@ -58,7 +58,12 @@ export function ResumeOverview({
         )}
 
         {contactItems.length > 0 && (
-          <div className="rf-preview-contact">
+          <div 
+            className="rf-preview-contact"
+            style={{
+              textAlign: "center",
+            }}
+          >
             {contactItems.join(" • ")}
           </div>
         )}
@@ -68,6 +73,7 @@ export function ResumeOverview({
             className="rf-preview-contact"
             style={{
               marginTop: "5px",
+              textAlign: "center",
             }}
           >
             {profile.links.map((link, index) => (
@@ -75,7 +81,14 @@ export function ResumeOverview({
                 key={`${link.label}-${index}`}
               >
                 {index > 0 ? " • " : ""}
-                {link.label}
+
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {link.label || link.url}
+                </a>
               </span>
             ))}
           </div>
@@ -120,23 +133,54 @@ export function ResumeOverview({
                 marginBottom: "18px",
               }}
             >
-              <h4
+              <div
                 style={{
-                  margin: "0 0 4px",
-                  color: "#2d3734",
-                  fontSize: "14px",
-                  fontWeight: 700,
-                  letterSpacing: "-0.01em",
+                  display: "flex",
+                  alignItems: "baseline",
+                  justifyContent: "space-between",
+                  gap: "16px",
+                  marginBottom: "4px",
                 }}
               >
+                <h4
+                  style={{
+                    margin: 0,
+                    color: "#2d3734",
+                    fontSize: "14px",
+                    fontWeight: 700,
+                    letterSpacing: "-0.01em",
+                  }}
+                >
                 {experience.title}
               </h4>
 
+              {(experience.startDate ||
+                experience.endDate ||
+                experience.current) && (
+                <div
+                  style={{
+                    flexShrink: 0,
+                    color: "#66736f",
+                    fontSize: "13px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {experience.startDate}
+
+                  {experience.current
+                    ? " – Present"
+                    : experience.endDate
+                    ? ` – ${experience.endDate}`
+                    : ""}
+                </div>
+                )}
+              </div>
+                
               <div
                 style={{
                   color: "#66736f",
-                  fontSize: "12px",
-                  marginBottom: "7px",
+                  fontSize: "13px",
+                  marginBottom: "8px",
                 }}
               >
                 {experience.company}
@@ -145,26 +189,6 @@ export function ResumeOverview({
                   ? ` • ${experience.location}`
                   : ""}
               </div>
-
-              {(experience.startDate ||
-                experience.endDate ||
-                experience.current) && (
-                <div
-                  style={{
-                    marginBottom: "8px",
-                    color: "#7a8581",
-                    fontSize: "11px",
-                  }}
-                >
-                  {experience.startDate}
-
-                  {experience.current
-                    ? " – Present"
-                    : experience.endDate
-                      ? ` – ${experience.endDate}`
-                      : ""}
-                </div>
-              )}
 
               {experience.bullets.length > 0 && (
                 <ul
@@ -229,7 +253,7 @@ export function ResumeOverview({
               <div
                 style={{
                   color: "#66736f",
-                  fontSize: "12px",
+                  fontSize: "13px",
                 }}
               >
                 {education.institution}
@@ -245,7 +269,7 @@ export function ResumeOverview({
                   style={{
                     marginTop: "3px",
                     color: "#7a8581",
-                    fontSize: "11px",
+                    fontSize: "13px",
                   }}
                 >
                   {education.startDate}
@@ -304,7 +328,7 @@ export function ResumeOverview({
                   style={{
                     marginBottom: "7px",
                     color: "#66736f",
-                    fontSize: "12px",
+                    fontSize: "13px",
                   }}
                 >
                   {project.technologies.join(
@@ -339,7 +363,7 @@ export function ResumeOverview({
                   style={{
                     marginTop: "6px",
                     color: "#52756b",
-                    fontSize: "11px",
+                    fontSize: "13px",
                   }}
                 >
                   {project.url}
