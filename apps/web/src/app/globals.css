@@ -1373,17 +1373,9 @@ label > span {
 }
 
 .rf-modern-skill-row {
-
   display: grid;
-
-  grid-template-columns:
-
-    minmax(100px, 0.3fr)
-
-    minmax(0, 1fr);
-
+  grid-template-columns: 150px minmax(0, 1fr);
   gap: 12px;
-
   color: #40514a;
 
 }
