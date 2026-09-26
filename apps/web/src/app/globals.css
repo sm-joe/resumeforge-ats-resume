@@ -2601,3 +2601,121 @@ label > span {
   transform: none;
 
 }
+.rf-rich-text-content ul {
+  list-style-type: disc;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.rf-rich-text-content ol {
+  list-style-type: decimal;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.rf-rich-text-content li {
+  display: list-item;
+  margin-bottom: 3px;
+}
+
+.rf-rich-text-content li:last-child {
+  margin-bottom: 0;
+}
+
+/* =========================================================
+   PRINT EXPORT
+   ========================================================= */
+
+.rf-print-document {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 210mm;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  /*
+   * Hide the complete ResumeForge editor/application.
+   * This removes it from the print layout entirely,
+   * preventing blank/extra pages.
+   */
+  .rf-page {
+    display: none !important;
+  }
+
+  /*
+   * Print only the dedicated resume document.
+   */
+  .rf-print-document {
+    display: block !important;
+    width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .rf-print-sheet {
+    width: 210mm !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 18mm 17mm !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  /*
+   * Allow the resume to flow naturally across pages.
+   * Do not force complete sections onto the next page.
+   */
+  .rf-print-sheet .rf-preview-section {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  /*
+   * Keep headings with the content immediately following them.
+   */
+  .rf-print-sheet h1,
+  .rf-print-sheet h2,
+  .rf-print-sheet h3,
+  .rf-print-sheet h4 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .rf-print-sheet ul,
+  .rf-print-sheet ol {
+    break-inside: auto;
+  }
+}
+
+@media print {
+  .rf-print-sheet .rf-resume-preview-header {
+    text-align: center;
+  }
+
+  .rf-print-sheet .rf-preview-name,
+  .rf-print-sheet .rf-preview-headline {
+    width: 100%;
+    text-align: center;
+  }
+
+  .rf-print-sheet .rf-preview-contact {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+}

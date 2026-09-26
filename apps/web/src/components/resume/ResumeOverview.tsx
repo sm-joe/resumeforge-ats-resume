@@ -1,13 +1,33 @@
 import type { Resume } from "@resumeforge/resume-schema";
+import { SafeRichText } from "@/components/resume/SafeRichText";
 
 interface ResumeOverviewProps {
   resume: Resume;
+  sectionOrder?: string[];
 }
 
 export function ResumeOverview({
   resume,
+  sectionOrder,
 }: ResumeOverviewProps) {
   const { profile } = resume;
+
+  const orderedSections = sectionOrder ?? [
+    "summary",
+    "experience",
+    "education",
+    "projects",
+    "certifications",
+    "languages",
+    "skills",
+    "custom-sections",
+  ]
+
+  const getSectionOrder = (sectionId: string) => {
+    const index = orderedSections.indexOf(sectionId);
+
+    return index === -1 ? 999 : index + 1;
+  };
 
   const contactItems = [
     profile.email,
@@ -16,7 +36,12 @@ export function ResumeOverview({
   ].filter(Boolean);
 
   return (
-    <article>
+    <article
+      style={{
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       {/* =================================================
           HEADER
           ================================================= */}
@@ -62,10 +87,16 @@ export function ResumeOverview({
           ================================================= */}
 
       {resume.summary && (
-        <section className="rf-preview-section">
+        <section 
+          className="rf-preview-section"
+          style={{
+            order: getSectionOrder("summary"),
+          }}
+        >
+
           <h3>Professional Summary</h3>
 
-          <p>{resume.summary}</p>
+          <SafeRichText html={resume.summary} />
         </section>
       )}
 
@@ -74,7 +105,12 @@ export function ResumeOverview({
           ================================================= */}
 
       {resume.experience.length > 0 && (
-        <section className="rf-preview-section">
+        <section 
+          className="rf-preview-section"
+          style={{
+            order: getSectionOrder("experience"),
+          }}
+        >
           <h3>Experience</h3>
 
           {resume.experience.map((experience) => (
@@ -144,22 +180,27 @@ export function ResumeOverview({
                     .filter(Boolean)
                     .map((bullet, index) => (
                       <li key={index}>
-                        {bullet}
+                        <SafeRichText html={bullet} />
                       </li>
                     ))}
-                </ul>
+                  </ul>
+                )}
+                </div>
+                ))}
+                </section>
               )}
-            </div>
-          ))}
-        </section>
-      )}
 
       {/* =================================================
           EDUCATION
           ================================================= */}
 
       {resume.education.length > 0 && (
-        <section className="rf-preview-section">
+        <section 
+          className="rf-preview-section"
+          style={{
+            order: getSectionOrder("education"),
+          }}
+        >
           <h3>Education</h3>
 
           {resume.education.map((education) => (
@@ -224,7 +265,12 @@ export function ResumeOverview({
           ================================================= */}
 
       {resume.projects.length > 0 && (
-        <section className="rf-preview-section">
+        <section 
+          className="rf-preview-section"
+          style={{
+            order: getSectionOrder("projects"),
+          }}
+        >
           <h3>Projects</h3>
 
           {resume.projects.map((project) => (
@@ -247,13 +293,10 @@ export function ResumeOverview({
               </h4>
 
               {project.description && (
-                <p
-                  style={{
-                    marginBottom: "6px",
-                  }}
-                >
-                  {project.description}
-                </p>
+                <SafeRichText
+                  html={project.description}
+                  style={{ marginBottom: "6px" }}
+                />
               )}
 
               {project.technologies.length > 0 && (
@@ -284,11 +327,12 @@ export function ResumeOverview({
                     .filter(Boolean)
                     .map((bullet, index) => (
                       <li key={index}>
-                        {bullet}
+                        <SafeRichText html={bullet} />
                       </li>
                     ))}
-                </ul>
-              )}
+                  </ul>
+                )}
+                    
 
               {project.url && (
                 <div
@@ -311,7 +355,12 @@ export function ResumeOverview({
           ================================================= */}
 
       {resume.skills.categories.length > 0 && (
-        <section className="rf-preview-section">
+        <section 
+          className="rf-preview-section"
+          style={{
+            order: getSectionOrder("skills"),
+          }}
+        >
           <h3>Skills</h3>
 
           <div
@@ -348,7 +397,12 @@ export function ResumeOverview({
           ================================================= */}
 
       {resume.certifications.length > 0 && (
-        <section className="rf-preview-section">
+        <section 
+          className="rf-preview-section"
+          style={{
+            order: getSectionOrder("certifications"),
+          }}
+        >
           <h3>Certifications</h3>
 
           {resume.certifications.map(
@@ -389,7 +443,12 @@ export function ResumeOverview({
           ================================================= */}
 
       {resume.languages.length > 0 && (
-        <section className="rf-preview-section">
+        <section 
+          className="rf-preview-section"
+          style={{
+            order: getSectionOrder("languages"),
+          }}
+        >
           <h3>Languages</h3>
 
           <div
@@ -425,6 +484,9 @@ export function ResumeOverview({
           <section
             key={section.id}
             className="rf-preview-section"
+            style={{
+              order: getSectionOrder("custom-sections"),
+            }}
           >
             <h3>{section.title}</h3>
 

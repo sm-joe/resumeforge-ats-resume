@@ -1,7 +1,7 @@
 "use client";
 
 import { TextField } from "@/components/editor/fields/TextField";
-import { TextAreaField } from "@/components/editor/fields/TextAreaField";
+import { RichTextField } from "@/components/editor/fields/RichTextField";
 import { useEditor } from "@/lib/editor/EditorProvider";
 
 export function ExperienceEditor() {
@@ -205,7 +205,7 @@ export function ExperienceEditor() {
                       className="rf-bullet-row"
                     >
                       <div style={{ flex: 1 }}>
-                        <TextAreaField
+                        <RichTextField
                           label={`Work Experience Detail ${
                             bulletIndex + 1
                           }`}

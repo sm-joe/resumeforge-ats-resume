@@ -1,7 +1,7 @@
 "use client";
 
 import { TextField } from "@/components/editor/fields/TextField";
-import { TextAreaField } from "@/components/editor/fields/TextAreaField";
+import { RichTextField } from "@/components/editor/fields/RichTextField";
 import { useEditor } from "@/lib/editor/EditorProvider";
 
 export function ProjectEditor() {
@@ -94,7 +94,7 @@ export function ProjectEditor() {
                 }
               />
 
-              <TextAreaField
+              <RichTextField
                 label="Description"
                 value={project.description ?? ""}
                 onChange={(value) =>
@@ -123,7 +123,7 @@ export function ProjectEditor() {
                     className="rf-bullet-row"
                   >
                     <div style={{ flex: 1 }}>
-                      <TextAreaField
+                      <RichTextField
                         label={`Highlight ${
                           bulletIndex + 1
                         }`}

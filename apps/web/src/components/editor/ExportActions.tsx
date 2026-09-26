@@ -6,6 +6,26 @@ import { useEditor } from "@/lib/editor/EditorProvider";
 
 type ExportFormat = "pdf" | "word";
 
+function getPdfFilename(resume: {
+  profile: {
+    headline?: string;
+  };
+  metadata: {
+    title?: string;
+  };
+}) {
+  const preferredName =
+    resume.profile.headline?.trim() ||
+    resume.metadata.title?.trim() ||
+    "ResumeForge Resume";
+
+  const filename = preferredName
+    .replace(/[^a-zA-Z0-9]+/g, "")
+    .trim();
+
+  return filename || "ResumeForgeResume";
+}
+
 export function ExportActions() {
   const { state } = useEditor();
   const [exporting, setExporting] =
@@ -16,8 +36,16 @@ export function ExportActions() {
     setError("");
     setExporting("pdf");
 
+    const previousTitle = document.title;
+
+    const filename = getPdfFilename(
+      state.resume,
+    );
+
     const handleAfterPrint = () => {
+      document.title = previousTitle;
       setExporting(null);
+
       window.removeEventListener(
         "afterprint",
         handleAfterPrint,
@@ -29,7 +57,24 @@ export function ExportActions() {
       handleAfterPrint,
     );
 
-    window.print();
+    try {
+      document.title = filename;
+      window.print();
+    } catch (exportError) {
+      window.removeEventListener(
+        "afterprint",
+        handleAfterPrint,
+      );
+
+      document.title = previousTitle;
+      setExporting(null);
+
+      setError(
+        exportError instanceof Error
+          ? exportError.message
+          : "PDF export failed.",
+      );
+    }
   };
 
   const handleWordExport = async () => {

@@ -1,3 +1,5 @@
+from html.parser import HTMLParser
+from io import BytesIO
 from pathlib import Path
 
 from docx import Document
@@ -7,10 +9,146 @@ from docx.shared import Inches, Pt
 from ..models import Resume
 
 
+class _RichTextToDocxParser(HTMLParser):
+    """
+    Convert ResumeForge rich-text HTML into python-docx content.
+
+    Supported HTML:
+    - <strong>, <b>
+    - <em>, <i>
+    - <u>
+    - <br>
+    - <ul><li>
+    - <ol><li>
+    - plain text
+    """
+
+    def __init__(self, document: Document):
+        super().__init__(convert_charrefs=True)
+
+        self.document = document
+        self.current_paragraph = None
+
+        self.bold = False
+        self.italic = False
+        self.underline = False
+
+        self.list_stack: list[str] = []
+
+    def _ensure_paragraph(self):
+        if self.current_paragraph is None:
+            self.current_paragraph = self.document.add_paragraph()
+
+        return self.current_paragraph
+
+    def _add_text(self, text: str) -> None:
+        if not text:
+            return
+
+        paragraph = self._ensure_paragraph()
+
+        run = paragraph.add_run(text)
+        run.bold = self.bold
+        run.italic = self.italic
+        run.underline = self.underline
+
+    def handle_starttag(self, tag, attrs):
+        tag = tag.lower()
+
+        if tag in {"strong", "b"}:
+            self.bold = True
+            return
+
+        if tag in {"em", "i"}:
+            self.italic = True
+            return
+
+        if tag == "u":
+            self.underline = True
+            return
+
+        if tag == "br":
+            paragraph = self._ensure_paragraph()
+            paragraph.add_run().add_break()
+            return
+
+        if tag == "ul":
+            self.list_stack.append("ul")
+            return
+
+        if tag == "ol":
+            self.list_stack.append("ol")
+            return
+
+        if tag == "li":
+            list_type = (
+                self.list_stack[-1]
+                if self.list_stack
+                else "ul"
+            )
+
+            style = (
+                "List Number"
+                if list_type == "ol"
+                else "List Bullet"
+            )
+
+            self.current_paragraph = self.document.add_paragraph(
+                style=style
+            )
+
+    def handle_endtag(self, tag):
+        tag = tag.lower()
+
+        if tag in {"strong", "b"}:
+            self.bold = False
+            return
+
+        if tag in {"em", "i"}:
+            self.italic = False
+            return
+
+        if tag == "u":
+            self.underline = False
+            return
+
+        if tag == "li":
+            self.current_paragraph = None
+            return
+
+        if tag in {"ul", "ol"}:
+            if self.list_stack:
+                self.list_stack.pop()
+
+            self.current_paragraph = None
+            return
+
+        if tag in {"p", "div"}:
+            self.current_paragraph = None
+
+    def handle_data(self, data):
+        self._add_text(data)
+
+
+def _add_rich_text(
+    document: Document,
+    value: str,
+) -> None:
+    """
+    Add ResumeForge rich-text HTML to a Word document.
+    """
+    if not value or not value.strip():
+        return
+
+    parser = _RichTextToDocxParser(document)
+    parser.feed(value)
+    parser.close()
+
+
 def resume_to_docx(
     resume: Resume,
-    output_path: str | Path,
-) -> Path:
+    output_path: str | Path | None = None,
+):
     document = Document()
 
     section = document.sections[0]
@@ -80,7 +218,11 @@ def resume_to_docx(
 
     if resume.summary.strip():
         add_heading("Professional Summary")
-        document.add_paragraph(resume.summary)
+
+        _add_rich_text(
+            document,
+            resume.summary,
+        )
 
     if resume.experience:
         add_heading("Experience")
@@ -92,11 +234,15 @@ def resume_to_docx(
             run.bold = True
 
             if experience.company:
-                run = paragraph.add_run(f" — {experience.company}")
+                run = paragraph.add_run(
+                    f" — {experience.company}"
+                )
                 run.bold = True
 
             if experience.location:
-                paragraph.add_run(f" • {experience.location}")
+                paragraph.add_run(
+                    f" • {experience.location}"
+                )
 
             dates = ""
 
@@ -109,16 +255,18 @@ def resume_to_docx(
                 dates = f"{dates} – {experience.endDate}"
 
             if dates:
-                paragraph.add_run(f" | {dates}")
+                paragraph.add_run(
+                    f" | {dates}"
+                )
 
             for bullet in experience.bullets:
                 if not bullet.strip():
                     continue
 
-                bullet_paragraph = document.add_paragraph(
-                    style="List Bullet"
+                _add_rich_text(
+                    document,
+                    bullet,
                 )
-                bullet_paragraph.add_run(bullet)
 
     if resume.education:
         add_heading("Education")
@@ -159,7 +307,9 @@ def resume_to_docx(
                 dates = f"{dates} – {education.endDate}"
 
             if dates:
-                paragraph.add_run(f" | {dates}")
+                paragraph.add_run(
+                    f" | {dates}"
+                )
 
     if resume.projects:
         add_heading("Projects")
@@ -171,19 +321,24 @@ def resume_to_docx(
             run.bold = True
 
             if project.description:
-                document.add_paragraph(project.description)
+                _add_rich_text(
+                    document,
+                    project.description,
+                )
 
             for bullet in project.bullets:
                 if not bullet.strip():
                     continue
 
-                bullet_paragraph = document.add_paragraph(
-                    style="List Bullet"
+                _add_rich_text(
+                    document,
+                    bullet,
                 )
-                bullet_paragraph.add_run(bullet)
 
             if project.url:
-                document.add_paragraph(project.url)
+                document.add_paragraph(
+                    project.url
+                )
 
     if resume.skills.categories:
         add_heading("Skills")
@@ -252,9 +407,19 @@ def resume_to_docx(
                     custom_section.content
                 )
 
-    output = Path(output_path)
-    output.parent.mkdir(parents=True, exist_ok=True)
+    if output_path is not None:
+        output = Path(output_path)
+        output.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
 
-    document.save(str(output))
+        document.save(str(output))
 
-    return output
+        return output
+
+    output_buffer = BytesIO()
+    document.save(output_buffer)
+    output_buffer.seek(0)
+
+    return output_buffer
