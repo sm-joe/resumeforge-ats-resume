@@ -9,6 +9,7 @@ import { ResumeOverview } from "@/components/resume/ResumeOverview";
 import { SectionOrderEditor } from "@/components/resume/SectionOrderEditor";
 import { ExportActions } from "@/components/editor/ExportActions";
 import { useEditor } from "@/lib/editor/EditorProvider";
+import { ResumePrint } from "@/components/resume/ResumePrint";
 
 import {
   DEFAULT_RESUME_SECTION_ORDER,
@@ -461,9 +462,6 @@ export function ResumeWorkspace() {
               >
                 <ResumeOverview
                   resume={state.resume}
-                  sectionOrder={sectionOrder.map(
-                    (section) => section.id,
-                  )}
                 />
               </div>
             </div>
@@ -497,24 +495,14 @@ export function ResumeWorkspace() {
       </div>
     </div>
 
-      {/* ================================================= 
-            PRINT-ONLY RESUME DOCUMENT
-            Uses the exact same ResumeOverview component
-            as the Live Preview.
-          ================================================= */}
-      <div
-        className="rf-print-document"
-        aria-hidden="true"
-      >
-        <div className="rf-print-sheet">
-          <ResumeOverview
-            resume={state.resume}
-            sectionOrder={sectionOrder.map(
-              (section) => section.id,
-            )}
-          />
-        </div>
+    <div
+      className="rf-print-document"
+      aria-hidden="true"
+    >
+      <div className="rf-print-sheet">
+        <ResumePrint resume={state.resume} />
       </div>
+    </div>
     </>
   );
 }

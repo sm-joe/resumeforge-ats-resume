@@ -37,7 +37,6 @@ def export_word(resume: Resume):
         f"{_safe_filename(resume.metadata.title)}.docx"
     )
 
-    # Convert the BytesIO buffer to a safe iterator chunk loop for StreamingResponse
     def stream_docx_chunks():
         while chunk := output_buffer.read(8192):
             yield chunk
@@ -75,11 +74,11 @@ async def export_pdf(resume: Resume):
         f"{_safe_filename(resume.metadata.title)}.pdf"
     )
 
-    # Streams file asynchronously and deletes it cleanly right after the stream finishes
     async def stream_pdf_chunks():
         async with await anyio.open_file(output_path, mode="rb") as f:
             while chunk := await f.read(8192):
                 yield chunk
+
         try:
             os.unlink(output_path)
         except OSError:
