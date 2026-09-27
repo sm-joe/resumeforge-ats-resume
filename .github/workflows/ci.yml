@@ -80,8 +80,7 @@ jobs:
             apps/analyzer
 
       - name: Test API
-        working-directory: apps/api
-        run: uv run --with pytest pytest
+        run: uv run --with pytest pytest tests
 
   docker:
     name: Docker
