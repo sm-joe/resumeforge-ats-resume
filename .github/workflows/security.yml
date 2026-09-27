@@ -102,4 +102,8 @@ jobs:
 
       - name: Audit Python dependencies
         run: |
-          uv audit
+          uv pip install --system pip-audit \
+          pip-audit \
+            --strict \
+            --desc \
+            --ignore-vuln PYSEC-0000
