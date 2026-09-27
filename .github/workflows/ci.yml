@@ -31,9 +31,17 @@ jobs:
           cache: npm
           cache-dependency-path: apps/web/package-lock.json
 
-      - name: Install dependencies
+      - name: Install web dependencies
         working-directory: apps/web
         run: npm ci
+
+      - name: Install resume schema dependencies
+        working-directory: packages/resume-schema
+        run: npm ci
+
+      - name: Build resume schema
+        working-directory: packages/resume-schema
+        run: npm run build
 
       - name: Build
         working-directory: apps/web
@@ -73,7 +81,7 @@ jobs:
 
       - name: Test API
         working-directory: apps/api
-        run: uv run pytest
+        run: uv run --with pytest pytest
 
   docker:
     name: Docker
