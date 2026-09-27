@@ -95,50 +95,6 @@ export function ResumeWorkspace() {
       DEFAULT_RESUME_SECTION_ORDER,
     );
 
-  useEffect(() => {
-    try {
-      const storedOrder =
-        window.localStorage.getItem(
-          RESUME_SECTION_ORDER_STORAGE_KEY,
-        );
-
-      if (storedOrder) {
-        const parsedOrder = JSON.parse(
-          storedOrder,
-        );
-
-        setSectionOrder(
-          normalizeResumeSectionOrder(
-            parsedOrder,
-          ),
-        );
-      }
-    } catch (error) {
-      console.error(
-        "Failed to restore resume section order:",
-        error,
-      );
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(
-        RESUME_SECTION_ORDER_STORAGE_KEY,
-        JSON.stringify(
-          sectionOrder.map(
-            (section) => section.id,
-          ),
-        ),
-      );
-    } catch (error) {
-      console.error(
-        "Failed to save resume section order:",
-        error,
-      );
-    }
-  }, [sectionOrder]);
-
   const sectionCounts = useMemo(
     () => ({
       profile: state.resume.profile.name ? 1 : 0,

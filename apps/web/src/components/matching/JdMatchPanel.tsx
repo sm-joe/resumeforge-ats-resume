@@ -166,7 +166,7 @@ export function JdMatchPanel() {
           resume: state.resume,
           job_description: jobDescription,
         }),
-      });
+    });
 
       const data = await response.json();
 
@@ -177,7 +177,55 @@ export function JdMatchPanel() {
         );
       }
 
-      setResult(data as JobMatchResult);
+      setResult({
+        overall_score:
+          data.overall_score ??
+          data.match_score ??
+          0,
+        role_title:
+          data.role_title ?? "",
+
+        category_scores:
+          data.category_scores ?? [],
+
+        requirements: {
+          required_skills:
+          data.requirements?.required_skills ?? [],
+        preferred_skills:
+          data.requirements?.preferred_skills ?? [],
+        responsibilities:
+          data.requirements?.responsibilities ?? [],
+        experience:
+          data.requirements?.experience ?? {
+            required_years: null,
+            resume_years: null,
+            status: "missing",
+          },
+        education:
+          data.requirements?.education ?? [],
+        certifications:
+          data.requirements?.certifications ?? [],
+        },
+
+        matched_keywords:
+          data.matched_keywords ?? [],
+
+        missing_keywords:
+          data.missing_keywords ?? [],
+        
+        partial_keywords:
+          data.partial_keywords ?? [],
+
+        keyword_coverage:
+          data.keyword_coverage ?? 0,
+
+        findings:
+          data.findings ?? [],
+
+        recommendations:
+          data.recommendations ?? [],
+        } as JobMatchResult);
+
     } catch (requestError) {
       setResult(null);
       setError(
@@ -419,12 +467,12 @@ export function JdMatchPanel() {
                 <strong
                   className={statusClass(
                     result.requirements.experience
-                      .status === "matched"
-                      ? "matched"
-                      : result.requirements.experience
-                            .status === "partial"
-                        ? "partial"
-                        : "missing",
+                    .status === "matched"
+                    ? "matched"
+                    : result.requirements.experience
+                        .status === "partial"
+                      ? "partial"
+                      : "missing",
                   )}
                 >
                   {result.requirements.experience.status}

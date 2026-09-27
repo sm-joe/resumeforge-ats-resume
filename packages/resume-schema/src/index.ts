@@ -74,6 +74,16 @@ export const CustomSectionSchema = z.object({
   items: z.array(z.string()).default([]),
 });
 
+export const ResumeDesignSchema = z.object({
+  template: z.string().default("modern"),
+  pageSize: z.enum(["A4", "LETTER"]).default("A4"),
+  fontFamily: z.string().default("Inter"),
+  accentColor: z.string().default("#24312d"),
+  spacing: z
+    .enum(["compact", "comfortable", "spacious"])
+    .default("comfortable"),
+});
+
 export const ResumeSchema = z.object({
   schemaVersion: z.literal("1.0"),
 
@@ -81,6 +91,14 @@ export const ResumeSchema = z.object({
     id: z.string(),
     title: z.string().default("Untitled Resume"),
     updatedAt: z.string(),
+  }),
+
+    design: ResumeDesignSchema.default({
+    template: "modern",
+    pageSize: "A4",
+    fontFamily: "Inter",
+    accentColor: "#24312d",
+    spacing: "comfortable",
   }),
 
   profile: ProfileSchema,

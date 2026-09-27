@@ -171,6 +171,7 @@ def _score_experience(
     complete_entries = 0
     total_bullets = 0
     quantified_bullets = 0
+    weak_action_bullets = 0
 
     for experience in experiences:
         if (
@@ -193,6 +194,19 @@ def _score_experience(
                 for character in bullet_text
             ):
                 quantified_bullets += 1
+
+            first_word = (
+                bullet_text
+                .lstrip("•-* ")
+                .split(maxsplit=1)[0]
+                .lower()
+                if bullet_text.str
+                else ""
+
+            )
+
+            if first_word not in RESPONSIBILITY_VERBS:
+                weak_action_bullets += 1
 
     if complete_entries == len(experiences):
         score += 5
@@ -230,6 +244,18 @@ def _score_experience(
             )
         )
 
+    if total_bullets > 0 and weak_action_bullets > 0:
+        findings.append(
+            _finding(
+                "experience-weak-action-verbs",
+                "info",
+                "Experience",
+                "Some experience bullets do not begin with a strong action verb. "
+                "Use clear verbs such as designed, implemented, automated, "
+                "optimized, led, or secured where accurate.",
+            )
+        )
+
     return min(score, 25), findings
 
 
@@ -260,6 +286,29 @@ def _score_skills(
         )
         for category in categories
     )
+
+    if len(categories) == 1 and skill_count >= 5:
+        findings.append(
+            _finding(
+                "skills-single-category",
+                "info",
+                "Skills",
+                "Skills are concentrated in a single category. "
+                "Consider grouping technical skills into clear categories "
+                "such as Cloud, DevOps, Security, Programming, or Tools where applicable.",
+            )
+        )
+
+    if any(not _text(category.name) for category in categories):
+        findings.append(
+            _finding(
+                "skills-unnamed-category",
+                "warning",
+                "Skills",
+                "One or more skill categories do not have a name. "
+                "Use clear category names to improve resume readability and ATS interpretation.",
+            )
+        )
 
     if skill_count == 0:
         findings.append(
