@@ -13,6 +13,29 @@ CATEGORY_WEIGHTS = {
     "Resume Structure": 15,
 }
 
+RESPONSIBILITY_VERBS = {
+    "achieved",
+    "administered",
+    "analyzed",
+    "architected",
+    "automated",
+    "built",
+    "configured",
+    "created",
+    "delivered",
+    "designed",
+    "developed",
+    "engineered",
+    "implemented",
+    "improved",
+    "integrated",
+    "led",
+    "migrated",
+    "optimized",
+    "reduced",
+    "secured",
+}
+
 
 def _text(value: Any) -> str:
     if value is None:
