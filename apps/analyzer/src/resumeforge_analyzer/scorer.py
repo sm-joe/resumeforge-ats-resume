@@ -200,7 +200,7 @@ def _score_experience(
                 .lstrip("•-* ")
                 .split(maxsplit=1)[0]
                 .lower()
-                if bullet_text.str
+                if bullet_text
                 else ""
 
             )

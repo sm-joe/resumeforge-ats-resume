@@ -3,6 +3,14 @@ import type { Resume } from "@resumeforge/resume-schema";
 export const demoResume: Resume = {
   schemaVersion: "1.0",
 
+  design: {
+    template: "modern",
+    pageSize: "A4",
+    fontFamily: "Inter",
+    accentColor: "#24312d",
+    spacing: "comfortable",
+  },
+
   metadata: {
     id: "demo-resume-001",
     title: "Senior Cloud Architect",
