@@ -9,6 +9,7 @@ import { ResumeOverview } from "@/components/resume/ResumeOverview";
 import { SectionOrderEditor } from "@/components/resume/SectionOrderEditor";
 import { ExportActions } from "@/components/editor/ExportActions";
 import { useEditor } from "@/lib/editor/EditorProvider";
+import { ResumePrint } from "@/components/resume/ResumePrint";
 
 import {
   DEFAULT_RESUME_SECTION_ORDER,
@@ -95,50 +96,6 @@ export function ResumeWorkspace() {
       DEFAULT_RESUME_SECTION_ORDER,
     );
 
-  useEffect(() => {
-    try {
-      const storedOrder =
-        window.localStorage.getItem(
-          RESUME_SECTION_ORDER_STORAGE_KEY,
-        );
-
-      if (storedOrder) {
-        const parsedOrder = JSON.parse(
-          storedOrder,
-        );
-
-        setSectionOrder(
-          normalizeResumeSectionOrder(
-            parsedOrder,
-          ),
-        );
-      }
-    } catch (error) {
-      console.error(
-        "Failed to restore resume section order:",
-        error,
-      );
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(
-        RESUME_SECTION_ORDER_STORAGE_KEY,
-        JSON.stringify(
-          sectionOrder.map(
-            (section) => section.id,
-          ),
-        ),
-      );
-    } catch (error) {
-      console.error(
-        "Failed to save resume section order:",
-        error,
-      );
-    }
-  }, [sectionOrder]);
-
   const sectionCounts = useMemo(
     () => ({
       profile: state.resume.profile.name ? 1 : 0,
@@ -200,6 +157,7 @@ export function ResumeWorkspace() {
   };
 
   return (
+    <>
     <div
       className="rf-page"
       style={{
@@ -227,28 +185,28 @@ export function ResumeWorkspace() {
         >
           <div>
             <p className="rf-eyebrow"
-               style={{
+              style={{
                 margin: "0 0 4px",
                 color: "#344054",
                 fontSize: "22px",
                 fontWeight: 800,
                 letterSpacing: "0.04em",
                 lineHeight: 1.15,
-               }}
+              }}
             >
               ResumeForge
             </p>
 
             <h1 className="rf-title"
-                style={{
-                  margin: 0,
-                  color: "#667085",
-                  fontSize: "18px",
-                  fontWeight: 600,
-                  letterSpacing: "-0.01em",
-                  lineHeight: 1.3,
-                }}
-              >
+              style={{
+                margin: 0,
+                color: "#667085",
+                fontSize: "18px",
+                fontWeight: 600,
+                letterSpacing: "-0.01em",
+                lineHeight: 1.3,
+              }}
+            >
               Build your ATS-friendly Resume
             </h1>
 
@@ -509,8 +467,8 @@ export function ResumeWorkspace() {
             </div>
 
             {/* =================================================
-                SECTION ORDER PANEL
-                ================================================= */}
+              SECTION ORDER PANEL
+              ================================================= */}
 
             <div className="rf-panel">
               <SectionOrderEditor
@@ -536,5 +494,15 @@ export function ResumeWorkspace() {
         </div>
       </div>
     </div>
+
+    <div
+      className="rf-print-document"
+      aria-hidden="true"
+    >
+      <div className="rf-print-sheet">
+        <ResumePrint resume={state.resume} />
+      </div>
+    </div>
+    </>
   );
 }

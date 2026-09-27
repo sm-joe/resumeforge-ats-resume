@@ -6,6 +6,8 @@ from ..models import Resume
 def _text(value: str | None) -> str:
     return escape(value or "")
 
+def _rich_text(value: str | None) -> str:
+    return value or ""
 
 def _section_heading(title: str) -> str:
     return f"""
@@ -49,7 +51,7 @@ def resume_to_html(resume: Resume) -> str:
                 dates = f"{dates} – {experience.endDate}"
 
             bullets = "".join(
-                f"<li>{_text(bullet)}</li>"
+                f"<li>{_rich_text(bullet)}</li>"
                 for bullet in experience.bullets
                 if bullet.strip()
             )
@@ -154,7 +156,7 @@ def resume_to_html(resume: Resume) -> str:
 
         for project in resume.projects:
             bullets = "".join(
-                f"<li>{_text(bullet)}</li>"
+                f"<li>{_rich_text(bullet)}</li>"
                 for bullet in project.bullets
                 if bullet.strip()
             )
@@ -165,7 +167,7 @@ def resume_to_html(resume: Resume) -> str:
                     <h3>{_text(project.name)}</h3>
 
                     {
-                        f'<p>{_text(project.description)}</p>'
+                        f'<div>{_rich_text(project.description)}</div>'
                         if project.description
                         else ""
                     }
@@ -446,7 +448,7 @@ li {{
 
 {
     _section_heading("Professional Summary")
-    + f'<p>{_text(resume.summary)}</p>'
+    + f'<div>{_rich_text(resume.summary)}</div>'
     if resume.summary.strip()
     else ""
 }

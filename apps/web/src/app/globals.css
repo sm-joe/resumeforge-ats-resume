@@ -1122,9 +1122,17 @@ label > span {
 
   font-family:
 
-    Arial,
+    Inter,
 
-    Helvetica,
+    ui-sans-serif,
+
+    system-ui,
+
+    -apple-system,
+
+    BlinkMacSystemFont,
+
+    "Segoe UI",
 
     sans-serif;
 
@@ -1373,17 +1381,9 @@ label > span {
 }
 
 .rf-modern-skill-row {
-
   display: grid;
-
-  grid-template-columns:
-
-    minmax(100px, 0.3fr)
-
-    minmax(0, 1fr);
-
+  grid-template-columns: 150px minmax(0, 1fr);
   gap: 12px;
-
   color: #40514a;
 
 }
@@ -1435,69 +1435,118 @@ label > span {
 }
 
 @media print {
-
   .rf-modern-resume {
-
     font-size: 10.5pt;
-
+    line-height: 1.45;
   }
 
   .rf-modern-header {
-
     border-bottom-color: #24312d;
+  }
 
+  .rf-modern-name {
+    font-size: 25px;
+    line-height: 1.1;
+    text-align: center;
+  }
+
+  .rf-modern-headline {
+    font-size: 12.5px;
+    line-height: 1.35;
+    text-align: center;
+  }
+
+  .rf-modern-contact,
+  .rf-modern-links {
+    justify-content: center;
+    text-align: center;
+    font-size: 10.5px;
+    line-height: 1.4;
   }
 
   .rf-modern-section {
-
+    margin-top: 14px;
     break-inside: auto;
+    page-break-inside: auto;
+  }
 
+  .rf-modern-section-title {
+    margin-bottom: 7px;
+    padding-bottom: 4px;
+    font-size: 10.5px;
+    line-height: 1.3;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .rf-modern-items {
+    gap: 10px;
   }
 
   .rf-modern-item {
-
     break-inside: avoid;
-
-  }
-
-}
-
-@media (max-width: 640px) {
-
-  .rf-modern-name {
-
-    font-size: 25px;
-
+    page-break-inside: avoid;
   }
 
   .rf-modern-item-header {
+    break-inside: avoid;
+  }
 
-    display: block;
+  .rf-modern-item-title {
+    font-size: 11.5pt;
+    line-height: 1.3;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
 
+  .rf-modern-item-subtitle {
+    font-size: 10pt;
+    line-height: 1.35;
   }
 
   .rf-modern-item-date {
+    font-size: 9.5pt;
+    line-height: 1.35;
+  }
 
-    margin-top: 3px;
+  .rf-modern-bullets {
+    margin-top: 5px;
+  }
 
-    text-align: left;
+  .rf-modern-bullets li {
+    margin-bottom: 2px;
+  }
 
+  .rf-modern-technologies {
+    margin-top: 4px;
+    font-size: 10pt;
+  }
+
+  .rf-modern-url {
+    margin-top: 4px;
+    font-size: 9.5pt;
+  }
+
+  .rf-modern-skills {
+    gap: 5px;
   }
 
   .rf-modern-skill-row {
-
-    grid-template-columns: 1fr;
-
-    gap: 1px;
-
+    font-size: 10pt;
+    line-height: 1.35;
   }
 
+  .rf-modern-certification,
+  .rf-modern-language {
+    font-size: 10pt;
+    line-height: 1.35;
+  }
+}
+
+@media (max-width: 760px) {
   .rf-modern-languages {
-
     grid-template-columns: 1fr;
-
   }
-
 }
 
 .rf-template-selector {
@@ -2437,23 +2486,6 @@ label > span {
   }
 
 }
-
-.rf-button {
-
-  min-height: 40px;
-
-  padding: 0 16px;
-
-  border-radius: 8px;
-
-  font-size: 13px;
-
-  font-weight: 600;
-
-  line-height: 1;
-
-}
-
 /* =========================================================
 
    ANALYSIS PANEL TYPOGRAPHY
@@ -2600,4 +2632,152 @@ label > span {
 
   transform: none;
 
+}
+
+.rf-rich-text-content ul {
+
+  list-style-type: disc;
+
+  margin: 0;
+
+  padding-left: 20px;
+
+}
+
+.rf-rich-text-content ol {
+
+  list-style-type: decimal;
+
+  margin: 0;
+
+  padding-left: 20px;
+
+}
+
+.rf-rich-text-content li {
+
+  display: list-item;
+
+  margin-bottom: 3px;
+
+}
+
+.rf-rich-text-content li:last-child {
+
+  margin-bottom: 0;
+
+}
+
+/* =========================================================
+   PRINT EXPORT
+   ========================================================= */
+
+.rf-print-document {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm 17mm;
+  }
+
+  html,
+  body {
+    width: auto;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .rf-page {
+    display: none !important;
+  }
+
+  .rf-print-document {
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .rf-print-sheet {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  .rf-print-sheet > article {
+    display: block !important;
+  }
+
+  .rf-print-resume {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .rf-print-header {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 0 18px !important;
+  }
+
+  .rf-print-resume .rf-preview-section {
+    display: block !important;
+    width: 100% !important;
+    margin-top: 12px !important;
+    break-before: auto !important;
+    break-after: auto !important;
+    break-inside: auto !important;
+    page-break-before: auto !important;
+    page-break-after: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .rf-print-resume ul,
+  .rf-print-resume ol {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .rf-print-resume h1,
+  .rf-print-resume h2,
+  .rf-print-resume h3,
+  .rf-print-resume h4 {
+    break-before: auto !important;
+    break-after: avoid !important;
+    page-break-before: auto !important;
+    page-break-after: avoid !important;
+  }
+
+  .rf-print-resume .rf-preview-name,
+  .rf-print-resume .rf-preview-headline,
+  .rf-print-resume .rf-preview-contact {
+    width: 100%;
+    text-align: center !important;
+  }
+
+  .rf-print-resume .rf-preview-contact {
+    justify-content: center !important;
+  }
+}
+
+html,
+body,
+.rf-print-document,
+.rf-print-sheet {
+  break-after: avoid !important;
+  page-break-after: avoid !important;
 }

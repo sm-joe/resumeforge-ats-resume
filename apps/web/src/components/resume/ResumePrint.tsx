@@ -1,33 +1,15 @@
 import type { Resume } from "@resumeforge/resume-schema";
+
 import { SafeRichText } from "@/components/resume/SafeRichText";
 
-interface ResumeOverviewProps {
+interface ResumePrintProps {
   resume: Resume;
-  sectionOrder?: string[];
 }
 
-export function ResumeOverview({
+export function ResumePrint({
   resume,
-  sectionOrder,
-}: ResumeOverviewProps) {
+}: ResumePrintProps) {
   const { profile } = resume;
-
-  const orderedSections = sectionOrder ?? [
-    "summary",
-    "experience",
-    "education",
-    "projects",
-    "certifications",
-    "languages",
-    "skills",
-    "custom-sections",
-  ]
-
-  const getSectionOrder = (sectionId: string) => {
-    const index = orderedSections.indexOf(sectionId);
-
-    return index === -1 ? 999 : index + 1;
-  };
 
   const contactItems = [
     profile.email,
@@ -36,17 +18,12 @@ export function ResumeOverview({
   ].filter(Boolean);
 
   return (
-    <article
-      style={{
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <article className="rf-print-resume">
       {/* =================================================
           HEADER
           ================================================= */}
 
-      <header>
+      <header className="rf-print-header">
         <h1 className="rf-preview-name">
           {profile.name || "Your Name"}
         </h1>
@@ -58,7 +35,7 @@ export function ResumeOverview({
         )}
 
         {contactItems.length > 0 && (
-          <div 
+          <div
             className="rf-preview-contact"
             style={{
               textAlign: "center",
@@ -100,13 +77,7 @@ export function ResumeOverview({
           ================================================= */}
 
       {resume.summary && (
-        <section 
-          className="rf-preview-section"
-          style={{
-            order: getSectionOrder("summary"),
-          }}
-        >
-
+        <section className="rf-preview-section">
           <h3>Professional Summary</h3>
 
           <SafeRichText html={resume.summary} />
@@ -118,12 +89,7 @@ export function ResumeOverview({
           ================================================= */}
 
       {resume.experience.length > 0 && (
-        <section 
-          className="rf-preview-section"
-          style={{
-            order: getSectionOrder("experience"),
-          }}
-        >
+        <section className="rf-preview-section">
           <h3>Experience</h3>
 
           {resume.experience.map((experience) => (
@@ -151,31 +117,31 @@ export function ResumeOverview({
                     letterSpacing: "-0.01em",
                   }}
                 >
-                {experience.title}
-              </h4>
+                  {experience.title}
+                </h4>
 
-              {(experience.startDate ||
-                experience.endDate ||
-                experience.current) && (
-                <div
-                  style={{
-                    flexShrink: 0,
-                    color: "#66736f",
-                    fontSize: "13px",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {experience.startDate}
+                {(experience.startDate ||
+                  experience.endDate ||
+                  experience.current) && (
+                  <div
+                    style={{
+                      flexShrink: 0,
+                      color: "#66736f",
+                      fontSize: "13px",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {experience.startDate}
 
-                  {experience.current
-                    ? " – Present"
-                    : experience.endDate
-                    ? ` – ${experience.endDate}`
-                    : ""}
-                </div>
+                    {experience.current
+                      ? " – Present"
+                      : experience.endDate
+                      ? ` – ${experience.endDate}`
+                      : ""}
+                  </div>
                 )}
               </div>
-                
+
               <div
                 style={{
                   color: "#66736f",
@@ -207,24 +173,19 @@ export function ResumeOverview({
                         <SafeRichText html={bullet} />
                       </li>
                     ))}
-                  </ul>
-                )}
-                </div>
-                ))}
-                </section>
+                </ul>
               )}
+            </div>
+          ))}
+        </section>
+      )}
 
       {/* =================================================
           EDUCATION
           ================================================= */}
 
       {resume.education.length > 0 && (
-        <section 
-          className="rf-preview-section"
-          style={{
-            order: getSectionOrder("education"),
-          }}
-        >
+        <section className="rf-preview-section">
           <h3>Education</h3>
 
           {resume.education.map((education) => (
@@ -289,12 +250,7 @@ export function ResumeOverview({
           ================================================= */}
 
       {resume.projects.length > 0 && (
-        <section 
-          className="rf-preview-section"
-          style={{
-            order: getSectionOrder("projects"),
-          }}
-        >
+        <section className="rf-preview-section">
           <h3>Projects</h3>
 
           {resume.projects.map((project) => (
@@ -319,7 +275,9 @@ export function ResumeOverview({
               {project.description && (
                 <SafeRichText
                   html={project.description}
-                  style={{ marginBottom: "6px" }}
+                  style={{
+                    marginBottom: "6px",
+                  }}
                 />
               )}
 
@@ -331,9 +289,7 @@ export function ResumeOverview({
                     fontSize: "13px",
                   }}
                 >
-                  {project.technologies.join(
-                    " • ",
-                  )}
+                  {project.technologies.join(" • ")}
                 </div>
               )}
 
@@ -354,9 +310,8 @@ export function ResumeOverview({
                         <SafeRichText html={bullet} />
                       </li>
                     ))}
-                  </ul>
-                )}
-                    
+                </ul>
+              )}
 
               {project.url && (
                 <div
@@ -375,58 +330,11 @@ export function ResumeOverview({
       )}
 
       {/* =================================================
-          SKILLS
-          ================================================= */}
-
-      {resume.skills.categories.length > 0 && (
-        <section 
-          className="rf-preview-section"
-          style={{
-            order: getSectionOrder("skills"),
-          }}
-        >
-          <h3>Skills</h3>
-
-          <div
-            style={{
-              display: "grid",
-              gap: "7px",
-              color: "#394542",
-              fontSize: "13px",
-              lineHeight: 1.5,
-            }}
-          >
-            {resume.skills.categories.map(
-              (category) => (
-                <div key={category.id}>
-                  <strong>
-                    {category.name}
-                  </strong>
-
-                  {category.items.length > 0 && (
-                    <span>
-                      {" "}
-                      — {category.items.join(", ")}
-                    </span>
-                  )}
-                </div>
-              ),
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* =================================================
           CERTIFICATIONS
           ================================================= */}
 
       {resume.certifications.length > 0 && (
-        <section 
-          className="rf-preview-section"
-          style={{
-            order: getSectionOrder("certifications"),
-          }}
-        >
+        <section className="rf-preview-section">
           <h3>Certifications</h3>
 
           {resume.certifications.map(
@@ -467,12 +375,7 @@ export function ResumeOverview({
           ================================================= */}
 
       {resume.languages.length > 0 && (
-        <section 
-          className="rf-preview-section"
-          style={{
-            order: getSectionOrder("languages"),
-          }}
-        >
+        <section className="rf-preview-section">
           <h3>Languages</h3>
 
           <div
@@ -500,6 +403,41 @@ export function ResumeOverview({
       )}
 
       {/* =================================================
+          SKILLS
+          ================================================= */}
+
+      {resume.skills.categories.length > 0 && (
+        <section className="rf-preview-section">
+          <h3>Skills</h3>
+
+          <div
+            style={{
+              display: "grid",
+              gap: "7px",
+              color: "#394542",
+              fontSize: "13px",
+              lineHeight: 1.5,
+            }}
+          >
+            {resume.skills.categories.map(
+              (category) => (
+                <div key={category.id}>
+                  <strong>{category.name}</strong>
+
+                  {category.items.length > 0 && (
+                    <span>
+                      {" "}
+                      — {category.items.join(", ")}
+                    </span>
+                  )}
+                </div>
+              ),
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* =================================================
           CUSTOM SECTIONS
           ================================================= */}
 
@@ -508,9 +446,6 @@ export function ResumeOverview({
           <section
             key={section.id}
             className="rf-preview-section"
-            style={{
-              order: getSectionOrder("custom-sections"),
-            }}
           >
             <h3>{section.title}</h3>
 
@@ -527,9 +462,7 @@ export function ResumeOverview({
                 {section.items
                   .filter(Boolean)
                   .map((item, index) => (
-                    <li key={index}>
-                      {item}
-                    </li>
+                    <li key={index}>{item}</li>
                   ))}
               </ul>
             )}

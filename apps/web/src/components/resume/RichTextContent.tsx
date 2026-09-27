@@ -1,4 +1,4 @@
-import { sanitizeRichTextHtml } from "@/lib/rich-text/richText";
+import { sanitizeRichTextHtml } from "@/lib/richText";
 
 interface RichTextContentProps {
   value: string;

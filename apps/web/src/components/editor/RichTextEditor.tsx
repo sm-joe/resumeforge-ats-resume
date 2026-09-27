@@ -9,7 +9,7 @@ import {
 import {
   plainTextToRichTextHtml,
   sanitizeRichTextHtml,
-} from "@/lib/rich-text/richText";
+} from "@/lib/richText";
 
 interface RichTextEditorProps {
   value: string;
@@ -17,6 +17,14 @@ interface RichTextEditorProps {
   placeholder?: string;
   minHeight?: number;
 }
+
+type Command =
+  | "bold"
+  | "italic"
+  | "underline"
+  | "insertUnorderedList"
+  | "insertOrderedList"
+  | "removeFormat";
 
 const FONT_OPTIONS = [
   "Arial",
@@ -29,10 +37,10 @@ const FONT_OPTIONS = [
 ];
 
 const SIZE_OPTIONS = [
-  { label: "Small", value: "12px" },  // 🌟 CHANGE: Switched legacy string digits to standard CSS sizes
-  { label: "Normal", value: "16px" },
-  { label: "Large", value: "20px" },
-  { label: "XL", value: "24px" },
+  { label: "Small", value: "2" },
+  { label: "Normal", value: "3" },
+  { label: "Large", value: "4" },
+  { label: "XL", value: "5" },
 ];
 
 export function RichTextEditor({
@@ -41,131 +49,99 @@ export function RichTextEditor({
   placeholder = "Start writing...",
   minHeight = 150,
 }: RichTextEditorProps) {
-  const editorRef = useRef<HTMLDivElement | null>(null);
+  const editorRef =
+    useRef<HTMLDivElement | null>(null);
+  const initializedRef = useRef(false);
   const [focused, setFocused] = useState(false);
-  
-  // 🌟 CHANGE: Added a saved selection ref to prevent select boxes from dropping user highlighting
-  const savedSelectionRef = useRef<Range | null>(null);
 
-  // 🌟 CHANGE: Smarter value synchronization that avoids resetting the cursor on every single keypress
   useEffect(() => {
     const editor = editorRef.current;
-    if (!editor) return;
+    if (!editor || initializedRef.current) return;
 
-    const normalizedValue = value.includes("<")
+    editor.innerHTML = value.includes("<")
       ? sanitizeRichTextHtml(value)
       : plainTextToRichTextHtml(value);
 
-    // Only update innerHTML if it's genuinely different from the editor's current internal state
-    if (editor.innerHTML !== normalizedValue) {
-      editor.innerHTML = normalizedValue;
-    }
+    initializedRef.current = true;
   }, [value]);
 
   const emitChange = () => {
     const editor = editorRef.current;
     if (!editor) return;
 
-    onChange(sanitizeRichTextHtml(editor.innerHTML));
+    onChange(
+      sanitizeRichTextHtml(editor.innerHTML),
+    );
   };
 
-  // 🌟 CHANGE: Helper to capture and restore highlighted text nodes safely across clicks and selections
-  const restoreSelection = () => {
-    if (!savedSelectionRef.current) return;
-    const sel = window.getSelection();
-    if (sel) {
-      sel.removeAllRanges();
-      sel.addRange(savedSelectionRef.current);
-    }
-  };
-
-  // 🌟 CHANGE: Replaced deprecated execCommand with safe, future-proof semantic DOM node injection 
-  const executeToggle = (tagName: string) => {
+  const execute = (command: Command) => {
     editorRef.current?.focus();
-    restoreSelection();
-
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
-
-    const range = selection.getRangeAt(0);
-    
-    // Fallback wrapper for un-highlighted text points
-    if (range.collapsed) {
-      const element = document.createElement(tagName);
-      element.innerHTML = "&#8203;"; // Zero-width space allows typing inside the tag immediately
-      range.insertNode(element);
-      
-      // Relocate the user's cursor inside the new tag element layout cleanly
-      const newRange = document.createRange();
-      newRange.setStart(element, 1);
-      newRange.collapse(true);
-      selection.removeAllRanges();
-      selection.addRange(newRange);
-    } else {
-      const element = document.createElement(tagName);
-      try {
-        element.appendChild(range.extractContents());
-        range.insertNode(element);
-      } catch (e) {
-        // Fallback execution if the DOM extraction catches crossed boundaries
-        document.execCommand(tagName === "strong" ? "bold" : "italic", false);
-      }
-    }
+    document.execCommand(command, false);
     emitChange();
   };
 
-  // 🌟 CHANGE: Refactored Style/Font engine using standards-compliant inline style wrappers
-  const applyInlineStyle = (styleName: string, styleValue: string) => {
+  const setFont = (font: string) => {
+    if (!font) return;
+
     editorRef.current?.focus();
-    restoreSelection();
-
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
-
-    const range = selection.getRangeAt(0);
-    const span = document.createElement("span");
-    span.style.setProperty(styleName, styleValue);
-
-    span.appendChild(range.extractContents());
-    range.insertNode(span);
+    document.execCommand(
+      "fontName",
+      false,
+      font,
+    );
     emitChange();
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "b") {
-      event.preventDefault();
-      executeToggle("strong");
-    }
+  const setSize = (size: string) => {
+    if (!size) return;
 
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "i") {
-      event.preventDefault();
-      executeToggle("em");
-    }
+    editorRef.current?.focus();
+    document.execCommand(
+      "fontSize",
+      false,
+      size,
+    );
+    emitChange();
   };
 
-  // 🌟 CHANGE: Tracks blur selection states to cleanly support toolbar custom changes without losing text ranges
-  const handleEditorBlur = () => {
-    setFocused(false);
-    const sel = window.getSelection();
-    if (sel && sel.rangeCount > 0) {
-      savedSelectionRef.current = sel.getRangeAt(0).cloneRange();
+  const handleKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+  ) => {
+    if (
+      (event.ctrlKey || event.metaKey) &&
+      event.key.toLowerCase() === "b"
+    ) {
+      event.preventDefault();
+      execute("bold");
+    }
+
+    if (
+      (event.ctrlKey || event.metaKey) &&
+      event.key.toLowerCase() === "i"
+    ) {
+      event.preventDefault();
+      execute("italic");
     }
   };
 
   return (
-    <div className={`rf-rich-text-editor${focused ? " rf-rich-text-editor--focused" : ""}`}>
+    <div
+      className={`rf-rich-text-editor${
+        focused ? " rf-rich-text-editor--focused" : ""
+      }`}
+    >
       <div
         className="rf-rich-text-toolbar"
         role="toolbar"
         aria-label="Rich text formatting"
         onMouseDown={(event) => {
-          event.preventDefault(); // Prevents drop focus structural shifts
+          event.preventDefault();
         }}
       >
         <button
           type="button"
           className="rf-rich-text-tool rf-rich-text-tool--strong"
-          onClick={() => executeToggle("strong")} // 🌟 CHANGE: Switched to robust DOM toggle engine
+          onClick={() => execute("bold")}
           title="Bold"
           aria-label="Bold"
         >
@@ -175,11 +151,47 @@ export function RichTextEditor({
         <button
           type="button"
           className="rf-rich-text-tool rf-rich-text-tool--italic"
-          onClick={() => executeToggle("em")} // 🌟 CHANGE: Changed from 'i' to standard 'em' semantic structure
+          onClick={() => execute("italic")}
           title="Italic"
           aria-label="Italic"
         >
           I
+        </button>
+
+        <button
+          type="button"
+          className="rf-rich-text-tool rf-rich-text-tool--underline"
+          onClick={() => execute("underline")}
+          title="Underline"
+          aria-label="Underline"
+        >
+          U
+        </button>
+
+        <span className="rf-rich-text-divider" />
+
+        <button
+          type="button"
+          className="rf-rich-text-tool"
+          onClick={() =>
+            execute("insertUnorderedList")
+          }
+          title="Bulleted list"
+          aria-label="Bulleted list"
+        >
+          • List
+        </button>
+
+        <button
+          type="button"
+          className="rf-rich-text-tool"
+          onClick={() =>
+            execute("insertOrderedList")
+          }
+          title="Numbered list"
+          aria-label="Numbered list"
+        >
+          1. List
         </button>
 
         <span className="rf-rich-text-divider" />
@@ -188,14 +200,18 @@ export function RichTextEditor({
           className="rf-rich-text-select"
           defaultValue=""
           onChange={(event) => {
-            applyInlineStyle("font-family", event.target.value);
+            setFont(event.target.value);
             event.currentTarget.value = "";
           }}
           aria-label="Font family"
         >
-          <option value="" disabled>Font</option>
+          <option value="" disabled>
+            Font
+          </option>
           {FONT_OPTIONS.map((font) => (
-            <option key={font} value={font}>{font}</option>
+            <option key={font} value={font}>
+              {font}
+            </option>
           ))}
         </select>
 
@@ -203,16 +219,32 @@ export function RichTextEditor({
           className="rf-rich-text-select"
           defaultValue=""
           onChange={(event) => {
-            applyInlineStyle("font-size", event.target.value);
+            setSize(event.target.value);
             event.currentTarget.value = "";
           }}
           aria-label="Font size"
         >
-          <option value="" disabled>Size</option>
+          <option value="" disabled>
+            Size
+          </option>
           {SIZE_OPTIONS.map((size) => (
-            <option key={size.value} value={size.value}>{size.label}</option>
+            <option
+              key={size.value}
+              value={size.value}
+            >
+              {size.label}
+            </option>
           ))}
         </select>
+
+        <button
+          type="button"
+          className="rf-rich-text-tool"
+          onClick={() => execute("removeFormat")}
+          title="Clear formatting"
+        >
+          Clear
+        </button>
       </div>
 
       <div
@@ -225,7 +257,7 @@ export function RichTextEditor({
         role="textbox"
         aria-multiline="true"
         onFocus={() => setFocused(true)}
-        onBlur={handleEditorBlur} // 🌟 CHANGE: Calls updated blur cache mechanism
+        onBlur={() => setFocused(false)}
         onInput={emitChange}
         onKeyDown={handleKeyDown}
       />

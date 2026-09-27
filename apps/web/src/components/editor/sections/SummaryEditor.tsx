@@ -1,7 +1,7 @@
 "use client";
 
 import { useEditor } from "@/lib/editor/EditorProvider";
-import { TextAreaField } from "@/components/editor/fields/TextAreaField";
+import { RichTextField } from "@/components/editor/fields/RichTextField";
 
 export function SummaryEditor() {
   const { state, dispatch } = useEditor();
@@ -28,7 +28,7 @@ export function SummaryEditor() {
         </div>
       </div>
 
-      <TextAreaField
+      <RichTextField
         label="Summary"
         value={state.resume.summary}
         onChange={updateSummary}
