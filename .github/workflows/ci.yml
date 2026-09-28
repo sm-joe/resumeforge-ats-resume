@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  packages: write
   security-events: write
 
 concurrency:
@@ -32,21 +33,16 @@ jobs:
           cache: npm
           cache-dependency-path: apps/web/package-lock.json
 
-      - name: Install web dependencies
-        working-directory: apps/web
-        run: npm ci
-
-      - name: Install resume schema dependencies
-        working-directory: packages/resume-schema
-        run: npm ci
+      - name: Install Node.js dependencies
+        run: |
+          npm ci --prefix apps/web
+          npm ci --prefix packages/resume-schema
 
       - name: Build resume schema
-        working-directory: packages/resume-schema
-        run: npm run build
+        run: npm run build --prefix packages/resume-schema
 
-      - name: Build
-        working-directory: apps/web
-        run: npm run build
+      - name: Build web application
+        run: npm run build --prefix apps/web
 
       - name: Setup Python
         uses: actions/setup-python@v7
@@ -63,8 +59,7 @@ jobs:
             apps/analyzer/uv.lock
 
       - name: Sync API dependencies
-        working-directory: apps/api
-        run: uv sync --locked
+        run: uv sync --project apps/api --locked
 
       - name: Install analyzer
         run: |
@@ -106,12 +101,10 @@ jobs:
           cache-dependency-path: apps/web/package-lock.json
 
       - name: Install web dependencies
-        working-directory: apps/web
-        run: npm ci
+        run: npm ci --prefix apps/web
 
       - name: npm audit
-        working-directory: apps/web
-        run: npm audit --audit-level=high
+        run: npm audit --prefix apps/web --audit-level=high
 
       - name: Setup Python
         uses: actions/setup-python@v7
@@ -123,11 +116,10 @@ jobs:
         with:
           version: "0.12.19"
 
-      - name: Sync API dependencies
-        working-directory: apps/api
-        run: uv sync --locked
+      - name: Sync API dependencies for audit
+        run: uv sync --project apps/api --locked
 
-      - name: Install analyzer
+      - name: Install analyzer for audit
         run: |
           uv pip install \
             --python apps/api/.venv/bin/python \
@@ -155,18 +147,24 @@ jobs:
         with:
           context: .
           file: apps/api/Dockerfile
+          load: true
           push: false
           tags: resumeforge-api:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Build Web image
+      - name: Build local API image for scanning
         uses: docker/build-push-action@v7
         with:
           context: .
           file: apps/web/Dockerfile
+          load: true
           push: false
           tags: resumeforge-web:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Scan API image
+      - name: Build local Web image for scanning
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           version: "v0.74.0"
@@ -186,5 +184,37 @@ jobs:
           exit-code: "1"
           ignore-unfixed: true
           severity: CRITICAL,HIGH
+
+      - name: Login to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push API image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/resumeforge-api:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/resumeforge-api:latest
+          cache-from: type=gha
+
+      - name: Push Web image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/resumeforge-web:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/resumeforge-web:latest
+          cache-from: type=gha
 
 
