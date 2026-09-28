@@ -1,8 +1,12 @@
 from fastapi import FastAPI
+from datetime import datetime, timezone
+from resumeforge_api.db import ResumeRecord, SessionLocal, init_db
+from .db import init_db
 
 from resumeforge_api.routes.export import router as export_router
 from resumeforge_api.routes.analyze import router as analyze_router
 from resumeforge_api.routes.match import router as match_router
+from resumeforge_api.routes.resumes import router as resumes_router
 
 from .models import Resume
 
@@ -12,6 +16,7 @@ app = FastAPI(
     version="0.1.0",
 )
 
+init_db()
 
 app.include_router(export_router)
 app.include_router(analyze_router)
@@ -76,3 +81,33 @@ def health() -> dict[str, str]:
 @app.get("/api/v1/resumes/demo", response_model=Resume)
 def get_demo_resume() -> Resume:
     return demo_resume
+
+app.include_router(resumes_router)
+
+def seed_demo_resume() -> None:
+    with SessionLocal() as session:
+        existing = session.get(
+            ResumeRecord,
+            demo_resume.metadata.id,
+        )
+
+        if existing is not None:
+            return
+
+        now = datetime.now(timezone.utc)
+
+        session.add(
+            ResumeRecord(
+                id=demo_resume.metadata.id,
+                title=demo_resume.metadata.title,
+                schema_version=demo_resume.schemaVersion,
+                resume_json=demo_resume.model_dump(),
+                created_at=now,
+                updated_at=now,
+            ),
+        )
+
+        session.commit()
+
+
+seed_demo_resume()

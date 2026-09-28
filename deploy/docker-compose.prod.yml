@@ -1,23 +1,18 @@
 services:
   api:
-    build:
-      context: ../..
-      dockerfile: apps/api/Dockerfile
-    image: resumeforge-api:local
+    image: ghcr.io/${GHCR_OWNER}/resumeforge-api:${IMAGE_TAG}
     restart: unless-stopped
-    
     environment:
       PYTHONDONTWRITEBYTECODE: "1"
       PYTHONUNBUFFERED: "1"
       PYTHONPATH: /app/apps/api/src
       RESUMEFORGE_DATA_DIR: /app/data
-
     ports:
       - "8000:8000"
 
     volumes:
       - ./data:/app/data
-
+      
     healthcheck:
       test:
         [
@@ -32,23 +27,17 @@ services:
       retries: 3
 
   web:
-    build:
-      context: ../..
-      dockerfile: apps/web/Dockerfile
-    image: resumeforge-web:local
+    image: ghcr.io/${GHCR_OWNER}/resumeforge-web:${IMAGE_TAG}
     restart: unless-stopped
-
     environment:
       NODE_ENV: production
       RESUMEFORGE_API_URL: http://api:8000
       NEXT_TELEMETRY_DISABLED: "1"
-
     depends_on:
       api:
         condition: service_healthy
     ports:
       - "3000:3000"
-
     healthcheck:
       test:
         [

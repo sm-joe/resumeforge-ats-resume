@@ -11,6 +11,7 @@ import {
 
 import type { Resume } from "@resumeforge/resume-schema";
 
+import { updateResume } from "../api";
 import { editorReducer } from "./reducer";
 import type { EditorState, ResumeAction } from "./types";
 
@@ -110,10 +111,18 @@ export function EditorProvider({
       return;
     }
 
-    const timeout = window.setTimeout(() => {
+    const timeout = window.setTimeout(async () => {
+      const savedAt = new Date().toISOString();
+      const serializedResume = JSON.stringify(
+        state.resume,
+      );
+
       try {
-        const savedAt = new Date().toISOString();
-        const serializedResume = JSON.stringify(
+        /*
+         * Persist the resume through the API.
+         */
+        await updateResume(
+          state.resume.metadata.id,
           state.resume,
         );
 
@@ -192,7 +201,7 @@ export function EditorProvider({
         });
       } catch (error) {
         console.error(
-          "Failed to auto-save ResumeForge draft:",
+          "Failed to auto-save ResumeForge resume:",
           error,
         );
       }
