@@ -79,10 +79,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Gitleaks
+      - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: "false"
 
       - name: Semgrep
         uses: semgrep/semgrep-action@v1
