@@ -1,0 +1,40 @@
+name: Feature request
+description: Suggest an improvement or new capability for ResumeForge.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve ResumeForge.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: Describe the problem this feature would solve.
+      placeholder: What problem are you trying to solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the behavior or capability you would like to see.
+      placeholder: Describe your proposed solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe any alternative approaches or workarounds you considered.
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Add examples, screenshots, references, or other useful context.

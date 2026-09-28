@@ -1,0 +1,48 @@
+# Normalize text files to LF
+* text=auto eol=lf
+
+# Source and configuration files
+*.py text
+*.ts text
+*.tsx text
+*.js text
+*.jsx text
+*.json text
+*.yaml text
+*.yml text
+*.toml text
+*.md text
+*.txt text
+*.sh text eol=lf
+
+# GitHub configuration
+.github/** text eol=lf
+
+# Docker and infrastructure
+Dockerfile text eol=lf
+*.dockerfile text eol=lf
+*.tf text
+*.tfvars text
+*.hcl text
+
+# Lockfiles
+package-lock.json text
+pnpm-lock.yaml text
+yarn.lock text
+uv.lock text
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.tar binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary

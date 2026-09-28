@@ -39,6 +39,15 @@ coverage/
 **/.env.*
 !**/.env.example
 
+# Local application data
+data/
+**/data/
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.sqlite-journal
+
 # Logs
 *.log
 npm-debug.log*
@@ -62,7 +71,6 @@ playwright-report/
 test-results/
 
 # Python tooling
-.mypy_cache/
 .pytype/
 .pyre/
 

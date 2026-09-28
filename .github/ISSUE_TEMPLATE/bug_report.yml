@@ -1,0 +1,59 @@
+name: Bug report
+description: Report a reproducible problem in ResumeForge.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please provide enough detail to reproduce the issue.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Clearly describe the problem and what you expected to happen.
+      placeholder: Describe the issue and expected behavior.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Provide the smallest reliable set of steps that reproduces the issue.
+      placeholder: |
+        1. Start...
+        2. Open...
+        3. Change...
+        4. Observe...
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include relevant versions and deployment details.
+      placeholder: |
+        ResumeForge version/commit:
+        Browser:
+        OS:
+        Docker/Compose:
+        Node/Python versions:
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Include relevant logs, stack traces, or screenshots. Remove secrets and personal information.
+      render: text
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Add any other context that may help diagnose the issue.

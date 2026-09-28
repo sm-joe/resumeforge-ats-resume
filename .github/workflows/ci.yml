@@ -10,8 +10,6 @@ on:
 
 permissions:
   contents: read
-  packages: write
-  security-events: write
 
 concurrency:
   group: pipeline-${{ github.workflow }}-${{ github.ref }}
@@ -21,6 +19,8 @@ jobs:
   ci:
     name: CI Run
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
@@ -74,6 +74,8 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     needs: ci
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
@@ -135,6 +137,9 @@ jobs:
     name: Docker Build
     runs-on: ubuntu-latest
     needs: security
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout
@@ -154,7 +159,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build local API image for scanning
+      - name: Build Web image
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -165,7 +170,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build local Web image for scanning
+      - name: Scan API image
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           version: "v0.74.0"
