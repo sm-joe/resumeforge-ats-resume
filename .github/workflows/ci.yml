@@ -133,9 +133,6 @@ jobs:
             --python apps/api/.venv/bin/python \
             apps/analyzer
 
-      - name: Install pip-audit
-        run: uv pip install pip-audit
-
       - name: Audit Python dependencies
         run: |
           uv pip install --system pip-audit
