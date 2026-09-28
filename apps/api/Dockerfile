@@ -38,12 +38,20 @@ RUN --mount=type=cache,target=/root/.cache/uv \
         --python /app/apps/api/.venv/bin/python \
         /app/apps/analyzer
 
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install \
+        --python /app/apps/api/.venv/bin/python \
+        "msgpack>=1.2.1" \
+        "setuptools>=78.1.1"
+
 # Copy application source after dependencies for better layer caching.
 COPY apps/api/src ./apps/api/src
 
 
 # --- STAGE 2: Runner ---
 FROM python:3.13-slim-bookworm AS runner
+
+RUN rm -rf /usr/local/lib/python3.13/site-packages/pip
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
