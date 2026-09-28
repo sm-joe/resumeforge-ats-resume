@@ -162,8 +162,8 @@ jobs:
           load: true
           push: false
           tags: resumeforge-api:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=resumeforge-api
+          cache-to: type=gha,mode=max,scope=resumeforge-api
 
       - name: Build Web image
         uses: docker/build-push-action@v7
@@ -173,8 +173,8 @@ jobs:
           load: true
           push: false
           tags: resumeforge-web:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=resumeforge-web
+          cache-to: type=gha,mode=max,scope=resumeforge-web
 
       - name: Scan API image
         uses: aquasecurity/trivy-action@v0.36.0
