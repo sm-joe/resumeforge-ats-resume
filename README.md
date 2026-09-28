@@ -137,8 +137,8 @@ The project is designed as a modular monorepo so the editor, API, resume schema,
 ### Run with Docker Compose
 
 ```bash
-git clone <repository-url>
-cd resumeforge
+git clone https://github.com/sm-joe/resumeforge-ats-resume.git
+cd resumeforge-ats-resume
 
 docker compose -f deploy/compose/compose.yaml up --build
 ```
