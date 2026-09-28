@@ -61,6 +61,8 @@ RUN test -f .next/standalone/server.js \
 # ============================================================
 FROM node:22-bookworm-slim AS runner
 
+RUN npm install -g npm@latest && npm cache clean --force
+
 WORKDIR /app
 
 ENV NODE_ENV=production \
