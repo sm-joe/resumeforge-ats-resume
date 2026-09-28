@@ -1,502 +1,531 @@
-ResumeForge
-ResumeForge is a portable resume builder for creating structured, ATS-friendly resumes with a live editor, analysis, export, and containerized deployment.
-The project uses a structured resume data model so the same data can power editing, preview, analysis, persistence, and export.
-At a glance
-Area	Details
-Frontend	Next.js, React, TypeScript
-Backend	FastAPI, Python
-Data	SQLite, SQLAlchemy
-Package management	npm, uv
-Export	Microsoft Word
-Containers	Docker, Docker Compose
-CI/CD	GitHub Actions
-Registry	GitHub Container Registry
-Security	Gitleaks, Semgrep, npm audit, pip-audit, Trivy
-Features
-Structured resume editor with live preview
-Modern resume templates
-Rich-text editing
-Resume sections for profile, summary, experience, projects, education, skills, certifications, languages, and custom content
-Browser draft persistence with `localStorage`
-Local resume version history
-API-backed resume persistence
-SQLite storage
-Resume CRUD API
-Demo resume initialization
-ATS-oriented resume analysis
-Resume/job matching
-Microsoft Word export
-Dockerized frontend and backend
-Docker Compose deployment
-Kubernetes deployment support
-GitHub Actions CI/CD
-Automated secret, code, dependency, and container scanning
-GitHub Container Registry publishing
-Architecture
+# ResumeForge
+
+ResumeForge is a portable, ATS-friendly resume builder focused on structured resume data, a practical editing experience, automated analysis, and self-hosted deployment.
+
+The project is designed as a modular monorepo so the editor, API, resume schema, analyzer, export workflows, and deployment configuration can evolve independently.
+
+## Overview
+
+| Area | ResumeForge |
+|---|---|
+| Purpose | Build, edit, analyze, persist, and export structured resumes |
+| Frontend | Next.js + React + TypeScript |
+| Backend | FastAPI + Python |
+| Data model | Shared TypeScript resume schema |
+| Persistence | SQLite + SQLAlchemy |
+| Analysis | ATS-oriented resume analyzer |
+| Matching | Resume-to-job matching |
+| Export | Microsoft Word |
+| Containers | Docker |
+| Orchestration | Docker Compose |
+| CI/CD | GitHub Actions |
+| Container registry | GitHub Container Registry |
+| Security | Gitleaks, Semgrep, npm audit, pip-audit, Trivy |
+| License | Apache License 2.0 |
+
+## Features
+
+| Category | Features |
+|---|---|
+| Resume Editor | Structured sections, rich text editing, inline editing, live preview |
+| Resume Content | Profile, summary, experience, projects, education, skills, certifications, languages, custom sections |
+| Templates | Modern resume presentation with reusable resume data |
+| Persistence | Browser drafts, local version history, API-backed persistence |
+| Resume API | Create, read, update, list, and delete resumes |
+| ATS | Resume analysis and scoring-oriented feedback |
+| Matching | Compare resume information with job requirements |
+| Export | Microsoft Word document export |
+| Deployment | Docker, Docker Compose, production Compose configuration |
+| Security | Secret scanning, SAST, dependency auditing, container vulnerability scanning |
+| Development | Feature branches, pull requests, protected `main`, automated CI |
+
+## Architecture
+
 ```text
-                              ResumeForge
-                                   │
-                    ┌──────────────┴──────────────┐
-                    │                             │
-              Next.js Web                    FastAPI API
-                    │                             │
-          ┌─────────┴─────────┐          ┌────────┴─────────┐
-          │                   │          │                  │
-      Editor State         Preview    Resume API         Analyzer
-          │                   │          │                  │
-          └─────────┬─────────┘          │                  │
-                    │                    │              Resume Analysis
-               localStorage             │
-                    │                SQLAlchemy
-                    │                    │
-                    │                 SQLite
-                    │
-                    └────── HTTP API ───┘
+                         ResumeForge
+                              │
+              ┌───────────────┴───────────────┐
+              │                               │
+        Next.js Web                       FastAPI API
+              │                               │
+      ┌───────┴────────┐             ┌────────┴─────────┐
+      │                │             │                  │
+   Editor           Preview       Resume API         Analyzer
+      │                │             │                  │
+      └───────┬────────┘             │             ATS Analysis
+              │                      │
+        EditorProvider           SQLAlchemy
+              │                      │
+        localStorage              SQLite
+              │
+              └────────── HTTP API ──────────┘
 ```
-Web application
-The web application provides the editing experience, live preview, editor state management, browser-side draft persistence, version history, and export workflows.
-API
-The backend uses FastAPI and provides resume persistence together with analysis, matching, and document export endpoints.
-Analyzer
-The analyzer package provides ATS-oriented resume analysis and scoring capabilities and is integrated with the backend.
-Storage
-Resume records are persisted through SQLAlchemy using SQLite.
-The editor also maintains browser-side draft and version history using `localStorage`.
-Repository structure
-```text
-.
-├── apps/
-│   ├── analyzer/                  # Resume analysis and scoring
-│   ├── api/                       # FastAPI backend
-│   │   ├── src/
-│   │   │   └── resumeforge_api/
-│   │   ├── Dockerfile
-│   │   └── pyproject.toml
-│   └── web/                       # Next.js frontend
-│       ├── src/
-│       ├── Dockerfile
-│       └── package.json
-│
-├── packages/
-│   └── resume-schema/             # Shared resume schema
-│
-├── deploy/
-│   ├── compose/                   # Local Docker Compose
-│   └── docker-compose.prod.yml    # Production Compose
-│
-├── .github/
-│   ├── ISSUE_TEMPLATE/
-│   ├── CODEOWNERS
-│   ├── dependabot.yml
-│   └── workflows/
-│
-├── tests/
-│
-├── CODE_OF_CONDUCT.md
-├── CONTRIBUTING.md
-├── LICENSE
-├── README.md
-└── SECURITY.md
-```
-Technology stack
-Component	Technology
-Web	Next.js, React, TypeScript
-API	FastAPI, Python
-Resume schema	TypeScript / Pydantic
-Database	SQLite
-ORM	SQLAlchemy
-JavaScript packages	npm
-Python packages	uv
-Word export	python-docx
-Containers	Docker
-Local orchestration	Docker Compose
-CI/CD	GitHub Actions
-Container registry	GitHub Container Registry
-Secret scanning	Gitleaks
-Static analysis	Semgrep
-JavaScript audit	npm audit
-Python audit	pip-audit
-Container scanning	Trivy
-Getting started
-Prerequisites
-Install:
-Node.js 22+
-npm
-Python 3.13+
-uv
-Docker
-Docker Compose
-Git
-Verify the tools:
-```bash
-node --version
-npm --version
-python --version
-uv --version
-docker --version
-docker compose version
-```
-Clone the repository
+
+### Application layers
+
+| Layer | Responsibility |
+|---|---|
+| `apps/web` | Resume editor, preview, browser state, export actions |
+| `apps/api` | HTTP API, persistence, analysis, matching, export |
+| `apps/analyzer` | ATS-oriented analysis and scoring logic |
+| `packages/resume-schema` | Shared resume data model and types |
+| `deploy` | Docker Compose and deployment configuration |
+| `tests` | Automated test coverage |
+
+## Tech Stack
+
+| Category | Technology |
+|---|---|
+| Frontend Framework | Next.js |
+| UI | React |
+| Frontend Language | TypeScript |
+| Backend Framework | FastAPI |
+| Backend Language | Python 3.13 |
+| API Server | Uvicorn |
+| Database | SQLite |
+| ORM | SQLAlchemy |
+| JavaScript Package Manager | npm |
+| Python Package Manager | uv |
+| Resume Schema | TypeScript shared package |
+| Word Export | python-docx |
+| Containerization | Docker |
+| Local / Production Orchestration | Docker Compose |
+| CI/CD | GitHub Actions |
+| Container Registry | GitHub Container Registry |
+| Secret Scanning | Gitleaks |
+| Static Analysis | Semgrep |
+| JavaScript Dependency Audit | npm audit |
+| Python Dependency Audit | pip-audit |
+| Container Scanning | Trivy |
+| Repository Automation | Dependabot |
+
+## Repository Structure
+
+| Path | Purpose |
+|---|---|
+| `apps/web` | Next.js resume editor and web application |
+| `apps/api` | FastAPI backend and persistence layer |
+| `apps/analyzer` | Resume analysis and scoring |
+| `packages/resume-schema` | Shared resume schema |
+| `deploy/compose` | Local Docker Compose configuration |
+| `deploy/docker-compose.prod.yml` | Production Compose configuration |
+| `tests` | Automated tests |
+| `.github/workflows` | CI, security, and container workflows |
+| `.github/ISSUE_TEMPLATE` | GitHub issue templates |
+| `.github/CODEOWNERS` | Code ownership rules |
+| `.github/dependabot.yml` | Dependency update configuration |
+| `README.md` | Project documentation |
+| `CONTRIBUTING.md` | Contribution workflow |
+| `SECURITY.md` | Security reporting policy |
+| `CODE_OF_CONDUCT.md` | Community standards |
+| `LICENSE` | Apache License 2.0 |
+
+## Quick Start
+
+### Prerequisites
+
+| Tool | Version / Requirement |
+|---|---|
+| Node.js | 22+ |
+| npm | Compatible with Node.js 22 |
+| Python | 3.13+ |
+| uv | Current supported version |
+| Docker | Current supported version |
+| Docker Compose | Current supported version |
+| Git | Current supported version |
+
+### Run with Docker Compose
+
 ```bash
 git clone <repository-url>
 cd resumeforge
+
+docker compose -f deploy/compose/compose.yaml up --build
 ```
-Replace `<repository-url>` with the URL of your ResumeForge repository.
-Local development
-Web dependencies
-```bash
-cd apps/web
-npm install
-```
-Build the shared resume schema when required:
-```bash
-cd ../../packages/resume-schema
-npm install
-npm run build
-```
-API dependencies
-From the repository root:
-```bash
-uv sync --directory apps/api
-```
-The API uses the analyzer package as a local project dependency.
-Run the API
-From the repository root:
-```bash
-uv run --directory apps/api uvicorn resumeforge_api.main:app --reload --port 8000
-```
-The API is available at:
-```text
-http://localhost:8000
-```
-Health check
-```text
-http://localhost:8000/health
-```
-Expected response:
-```json
-{
-  "status": "ok"
-}
-```
-API documentation
-FastAPI provides interactive documentation at:
-```text
-http://localhost:8000/docs
-```
-OpenAPI JSON:
-```text
-http://localhost:8000/openapi.json
-```
-Run the web application
-From `apps/web`:
-```bash
-npm run dev
-```
-The web application is available at:
+
+Then open:
+
 ```text
 http://localhost:3000
 ```
-The web application communicates with the FastAPI backend through `RESUMEFORGE_API_URL`.
-Environment configuration
-Web API URL
-Set:
-```text
-RESUMEFORGE_API_URL=http://localhost:8000
-```
-When the variable is not provided, the application falls back to:
+
+API:
+
 ```text
 http://localhost:8000
 ```
-API data directory
-Set:
+
+API health:
+
 ```text
-RESUMEFORGE_DATA_DIR=/app/data
+http://localhost:8000/health
 ```
-This controls where the SQLite database is stored.
-For containerized deployments, `/app/data` is mounted separately so database data can survive application-container replacement.
-Resume persistence
-ResumeForge uses browser persistence and API persistence together.
-Browser drafts
-The editor automatically stores the current draft in browser `localStorage`.
-This allows the current work to survive a browser refresh.
-Version history
-The editor maintains local resume snapshots in browser storage.
-The current implementation keeps up to 50 versions. Duplicate snapshots are not stored as separate versions.
-Each version contains:
-Resume data
-Version identifier
-Save timestamp
-API persistence
-Resume changes are also persisted through the FastAPI backend.
-The editor autosaves changes after a 600 ms debounce:
+
+API documentation:
+
+```text
+http://localhost:8000/docs
+```
+
+## Local Development
+
+### Web
+
+```bash
+cd apps/web
+npm install
+npm run dev
+```
+
+### Shared Resume Schema
+
+```bash
+cd packages/resume-schema
+npm install
+npm run build
+```
+
+### API
+
+From the repository root:
+
+```bash
+uv sync --directory apps/api
+uv run --directory apps/api uvicorn resumeforge_api.main:app --reload --port 8000
+```
+
+## Resume Persistence
+
+ResumeForge uses two persistence layers.
+
+| Layer | Purpose |
+|---|---|
+| Browser `localStorage` | Draft recovery and local version history |
+| FastAPI + SQLite | Persistent server-side resume storage |
+
+Editor changes are autosaved to the API after a short debounce period.
+
 ```text
 Editor
-  │
-  ▼
+  ↓
 EditorProvider
-  │
-  ▼
-600 ms autosave debounce
-  │
-  ▼
-FastAPI
-  │
-  ▼
+  ↓
+Autosave
+  ↓
+PUT /api/v1/resumes/{resume_id}
+  ↓
 SQLAlchemy
-  │
-  ▼
+  ↓
 SQLite
 ```
-The update request is:
-```http
-PUT /api/v1/resumes/{resume_id}
-```
-Resume API
-Method	Endpoint	Purpose
-`GET`	`/api/v1/resumes`	List persisted resumes
-`POST`	`/api/v1/resumes`	Create a resume
-`GET`	`/api/v1/resumes/{resume_id}`	Get a resume
-`PUT`	`/api/v1/resumes/{resume_id}`	Update a resume
-`DELETE`	`/api/v1/resumes/{resume_id}`	Delete a resume
-`GET`	`/api/v1/resumes/demo`	Get the demo resume
-A fresh database automatically seeds the demo resume when the API starts.
-Existing demo data is not overwritten during startup.
-ATS analysis
-ResumeForge includes an analyzer package for ATS-oriented resume analysis.
-The analyzer evaluates resume structure and content and provides scoring-oriented feedback. Analysis functionality is integrated with the API.
-Resume matching
-ResumeForge provides resume/job matching through the API.
-The matching endpoint is:
+
+The API data directory can be configured with:
+
 ```text
-/api/v1/match
+RESUMEFORGE_DATA_DIR
 ```
-It is designed to compare resume information against job-related requirements.
-Word export
-ResumeForge supports Microsoft Word resume export through the API.
-Endpoint:
+
+For container deployments, the recommended value is:
+
 ```text
-/api/v1/export/word
+/app/data
 ```
-The export workflow is integrated with the editor.
-Docker
-Separate Dockerfiles are provided for the API and web application.
-Build the API image
-From the repository root:
+
+## API
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/health` | API health check |
+| `GET` | `/api/v1/resumes` | List resumes |
+| `POST` | `/api/v1/resumes` | Create a resume |
+| `GET` | `/api/v1/resumes/demo` | Retrieve the demo resume |
+| `GET` | `/api/v1/resumes/{resume_id}` | Retrieve a resume |
+| `PUT` | `/api/v1/resumes/{resume_id}` | Update a resume |
+| `DELETE` | `/api/v1/resumes/{resume_id}` | Delete a resume |
+| `POST` | `/api/v1/analyze` | Analyze resume content |
+| `POST` | `/api/v1/match` | Match resume information against job requirements |
+| `POST` | `/api/v1/export/word` | Export resume as Microsoft Word |
+
+FastAPI interactive documentation is available at:
+
+```text
+http://localhost:8000/docs
+```
+
+## ATS Analysis
+
+ResumeForge includes an analyzer designed around structured resume information.
+
+| Capability | Purpose |
+|---|---|
+| Resume analysis | Evaluate resume structure and content |
+| ATS-oriented scoring | Provide scoring-oriented feedback |
+| Content checks | Identify areas that may need improvement |
+| Structured input | Analyze the same resume model used by the editor |
+
+The analyzer is implemented separately from the web application so the scoring logic can evolve independently.
+
+## Resume Matching
+
+The matching workflow compares structured resume information with job-related requirements.
+
+```text
+Resume
+  +
+Job Requirements
+  ↓
+Matching Engine
+  ↓
+Match Results
+```
+
+This is intended to help users identify alignment between their resume and a target role.
+
+## Word Export
+
+ResumeForge supports Microsoft Word export through the API.
+
+| Format | Support |
+|---|---|
+| `.docx` | Supported |
+| PDF | Application export workflow can be extended independently |
+
+The export layer operates from the structured resume model rather than editor-specific UI state.
+
+## Docker
+
+ResumeForge provides separate container builds for the API and web application.
+
+| Image | Dockerfile |
+|---|---|
+| API | `apps/api/Dockerfile` |
+| Web | `apps/web/Dockerfile` |
+
+Build locally:
+
 ```bash
 docker build   -f apps/api/Dockerfile   -t resumeforge-api:local   .
 ```
-Build the web image
+
 ```bash
 docker build   -f apps/web/Dockerfile   -t resumeforge-web:local   .
 ```
-Both images use multi-stage builds and run their runtime processes as non-root users.
-Docker Compose
-The local Compose configuration runs the API and web services together.
-Start the stack:
+
+The application containers use multi-stage builds and non-root runtime users.
+
+## Docker Compose
+
+| Configuration | Location | Purpose |
+|---|---|---|
+| Local | `deploy/compose/compose.yaml` | Local development and testing |
+| Production | `deploy/docker-compose.prod.yml` | Production-style deployment |
+
+Start locally:
+
 ```bash
 docker compose -f deploy/compose/compose.yaml up --build
 ```
-Run in the background:
-```bash
-docker compose -f deploy/compose/compose.yaml up --build -d
-```
-Stop the stack:
+
+Stop:
+
 ```bash
 docker compose -f deploy/compose/compose.yaml down
 ```
-Local endpoints:
-```text
-Web: http://localhost:3000
-API: http://localhost:8000
-```
-Persistent data
-The API stores SQLite data under:
+
+Persistent API data is stored under:
+
 ```text
 /app/data
 ```
-The Compose configuration mounts persistent host storage to this location and sets:
-```yaml
-RESUMEFORGE_DATA_DIR: /app/data
-```
-This keeps the database independent of the API container lifecycle.
-Production deployment
-The production Compose configuration is:
+
+and mounted outside the API container.
+
+## CI/CD
+
+ResumeForge uses a sequential GitHub Actions pipeline.
+
+| Stage | Check | Purpose |
+|---|---|---|
+| 1 | `CI Run` | Build applications and run tests |
+| 2 | `Security Scan` | Secret, code, and dependency security checks |
+| 3 | `Docker Build` | Build and scan container images |
+| 4 | GHCR Push | Publish images from `main` |
+
+Pipeline flow:
+
 ```text
-deploy/docker-compose.prod.yml
+CI Run
+   ↓
+Security Scan
+   ↓
+Docker Build
+   ↓
+GHCR
 ```
-It uses images published to GitHub Container Registry:
+
+### CI checks
+
+| Tool | Purpose |
+|---|---|
+| Gitleaks | Secret detection |
+| Semgrep | Static analysis |
+| npm audit | JavaScript dependency vulnerabilities |
+| pip-audit | Python dependency vulnerabilities |
+| Trivy | Container vulnerabilities |
+
+Container scanning checks `HIGH` and `CRITICAL` vulnerabilities while ignoring unfixed findings.
+
+## Container Registry
+
+Successful builds from `main` publish:
+
 ```text
-ghcr.io/<owner>/resumeforge-api:<tag>
-ghcr.io/<owner>/resumeforge-web:<tag>
+ghcr.io/<owner>/resumeforge-api:<git-sha>
+ghcr.io/<owner>/resumeforge-api:latest
+
+ghcr.io/<owner>/resumeforge-web:<git-sha>
+ghcr.io/<owner>/resumeforge-web:latest
 ```
-The web application communicates with the API over the Docker Compose service network.
-The API data directory remains mounted at:
+
+The Git commit SHA provides an immutable image reference while `latest` provides a convenient current tag.
+
+## Security
+
+| Control | Implementation |
+|---|---|
+| Secret scanning | Gitleaks |
+| Static analysis | Semgrep |
+| Node dependency audit | npm audit |
+| Python dependency audit | pip-audit |
+| Container scanning | Trivy |
+| Runtime user | Non-root |
+| Container health | Docker health checks |
+| Dependency updates | Dependabot |
+| Secret protection | GitHub secret scanning / push protection |
+| Branch protection | Protected `main` branch |
+| Change control | Pull requests |
+
+For vulnerability reporting, see [`SECURITY.md`](SECURITY.md).
+
+## GitHub Repository Controls
+
+The repository is configured around a pull-request based workflow.
+
+| Control | Configuration |
+|---|---|
+| Default branch | `main` |
+| Direct pushes to `main` | Blocked |
+| Force pushes | Blocked |
+| Branch deletion | Restricted |
+| Pull request | Required |
+| Required CI checks | `CI Run`, `Security Scan`, `Docker Build` |
+| Conversation resolution | Required |
+| Dependency updates | Dependabot |
+| Ownership | CODEOWNERS |
+| Issue intake | GitHub issue templates |
+| PR guidance | Pull request template |
+
+## Development Workflow
+
+```text
+Feature Branch
+      ↓
+Local Development
+      ↓
+Local Validation
+      ↓
+Pull Request
+      ↓
+CI Run
+      ↓
+Security Scan
+      ↓
+Docker Build
+      ↓
+Review
+      ↓
+Merge to main
+```
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for contribution guidelines.
+
+## Configuration
+
+### Web API URL
+
+The web application accepts:
+
+```text
+RESUMEFORGE_API_URL
+```
+
+Default:
+
+```text
+http://localhost:8000
+```
+
+### API data directory
+
+The API accepts:
+
+```text
+RESUMEFORGE_DATA_DIR
+```
+
+Container default:
+
 ```text
 /app/data
 ```
-CI/CD
-ResumeForge uses GitHub Actions for continuous integration, security validation, container scanning, and image publishing.
-The pipeline is intentionally sequential:
-```text
-CI Run
-   │
-   ▼
-Security Scan
-   │
-   ▼
-Docker Build
-```
-CI Run
-The CI stage:
-Installs JavaScript dependencies
-Builds the shared resume schema
-Builds the Next.js application
-Installs Python dependencies
-Installs the analyzer package
-Runs the project tests
-Security Scan
-The security stage runs:
-Gitleaks for secret scanning
-Semgrep for static analysis
-`npm audit` for JavaScript dependencies
-`pip-audit` for Python dependencies
-Docker Build
-The Docker stage:
-Builds the API image
-Builds the web image
-Loads both images for scanning
-Scans both images with Trivy
-Logs in to GHCR on `main`
-Publishes API and web images to GHCR
-Container scanning fails the pipeline for unfixed `HIGH` or `CRITICAL` vulnerabilities.
-Container security
-The application containers follow several hardening practices:
-Multi-stage builds
-Non-root runtime users
-Production dependency installation
-Minimal runtime environments
-Container health checks
-Separate persistent application data
-Automated vulnerability scanning in CI
-Health checks
-API
-```http
-GET /health
-```
-Web
-The web container performs an HTTP health check against the Next.js application.
-Docker Compose uses API health status so the web service can start after the API becomes healthy.
-Development workflow
-Development should use feature branches and pull requests.
-Example:
-```text
-main
- ├── feature/editor-improvement
- ├── feature/ats-analysis
- └── fix/api-persistence
-```
-Before opening a pull request:
-Build the affected application.
-Run the relevant tests.
-Validate API changes.
-Validate frontend changes.
-Validate Docker changes when applicable.
-Review the final diff.
-Open the pull request against `main`.
-Direct changes to `main` are protected by the repository's GitHub ruleset.
-Testing
-For API changes, verify the relevant endpoints:
-```text
-/health
-/api/v1/resumes
-/api/v1/analyze
-/api/v1/match
-/api/v1/export/word
-```
-For editor changes, verify:
-Resume editing
-Section editing
-Live preview
-Autosave
-Draft restoration
-Version history
-Export
-For Docker changes, verify:
-API image build
-Web image build
-Container startup
-Health checks
-Persistent data storage
-Project goals
-ResumeForge is built around a few core principles:
-Structured resume data
-Portable deployment
-Reusable architecture
-ATS-oriented analysis
-Local-first editing
-API-backed persistence
-Containerized deployment
-Automated CI/CD
-Automated security validation
-Extensible templates
-Roadmap
-Planned areas include:
-Additional resume templates
-Expanded ATS analysis
-Improved resume/job matching
-Enhanced resume version management
-Additional export formats
-Authentication and user accounts
-Multi-user resume ownership
-Expanded automated testing
-Additional deployment options
-Contributing
+
+Keep secrets and environment-specific configuration outside source control.
+
+## Roadmap
+
+| Area | Direction |
+|---|---|
+| Templates | Additional professional resume templates |
+| ATS | More detailed analysis and recommendations |
+| Matching | More comprehensive job/resume comparison |
+| Accounts | Optional authentication and user ownership |
+| Collaboration | Additional resume management workflows |
+| Export | Additional document and presentation formats |
+| Testing | Expanded unit, integration, and end-to-end coverage |
+| Deployment | Additional self-hosting and cloud deployment options |
+
+## Contributing
+
 Contributions are welcome.
-Please read `CONTRIBUTING.md` before submitting changes.
-The standard workflow is:
-```text
-Feature branch
-      │
-      ▼
-Local validation
-      │
-      ▼
-Pull request
-      │
-      ▼
-CI Run
-      │
-      ▼
-Security Scan
-      │
-      ▼
-Docker Build
-      │
-      ▼
-Merge
-```
-For security vulnerabilities, follow `SECURITY.md`.
-For community expectations, see `CODE_OF_CONDUCT.md`.
-Security
-ResumeForge includes automated security checks for:
-Secrets
-Source-code issues
-JavaScript dependencies
-Python dependencies
-Container vulnerabilities
-The project also uses:
-Non-root runtime containers
-Docker health checks
-Protected `main` branch
-Pull-request based changes
-Dependabot configuration
-GitHub secret scanning and push protection
-For vulnerability reporting, see `SECURITY.md`.
-License
+
+Before opening a pull request:
+
+| Check | Expected |
+|---|---|
+| Scope | Focused change |
+| Tests | Relevant tests pass |
+| Security | No secrets or credentials |
+| Documentation | Updated when applicable |
+| CI | Expected to pass |
+| Review | Pull request opened against `main` |
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the complete workflow.
+
+## Project Files
+
+| File | Purpose |
+|---|---|
+| [`LICENSE`](LICENSE) | Apache License 2.0 |
+| [`SECURITY.md`](SECURITY.md) | Vulnerability reporting and security policy |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Contribution guidelines |
+| [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) | Community standards |
+
+## License
+
 ResumeForge is licensed under the Apache License 2.0.
-See `LICENSE` for the complete license text.
-Acknowledgements
-ResumeForge is built with open-source technologies and libraries from the JavaScript, Python, FastAPI, React, Next.js, Docker, and cloud-native ecosystems.
+
+See [`LICENSE`](LICENSE) for the full license text.
+
 ---
-ResumeForge — structured, portable, ATS-friendly resume creation.
+
+ResumeForge — structured resume creation with ATS analysis, persistence, export, and self-hosted deployment.
