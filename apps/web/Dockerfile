@@ -7,26 +7,44 @@ FROM node:22-bookworm-slim AS deps
 
 WORKDIR /app
 
-# Shared schema package metadata/source
-COPY packages/resume-schema/package.json ./packages/resume-schema/package.json
-COPY packages/resume-schema/tsconfig.json ./packages/resume-schema/tsconfig.json
-COPY packages/resume-schema/src ./packages/resume-schema/src
+# ------------------------------------------------------------
+# Shared resume schema
+# Copy dependency metadata first so this layer is cached
+# unless the schema dependency definition changes.
+# ------------------------------------------------------------
+COPY packages/resume-schema/package.json \
+     packages/resume-schema/package-lock.json \
+     ./packages/resume-schema/
 
-# Web application metadata
-COPY apps/web/package.json ./apps/web/package.json
+RUN --mount=type=cache,id=resumeforge-npm-schema,target=/root/.npm \
+    npm ci \
+    --prefix ./packages/resume-schema \
+    --no-audit \
+    --no-fund
 
-# Install web dependencies
-WORKDIR /app/apps/web
+# Copy schema source only after dependencies are installed.
+COPY packages/resume-schema/tsconfig.json \
+     ./packages/resume-schema/tsconfig.json
 
-RUN --mount=type=cache,target=/root/.npm \
-    npm install
+COPY packages/resume-schema/src \
+     ./packages/resume-schema/src
 
-# Build the shared schema package
-WORKDIR /app/packages/resume-schema
+# Build shared schema.
+RUN npm run build --prefix ./packages/resume-schema
 
-RUN --mount=type=cache,target=/root/.npm \
-    npm install \
-    && npm run build
+
+# ------------------------------------------------------------
+# Web application dependencies
+# ------------------------------------------------------------
+COPY apps/web/package.json \
+     apps/web/package-lock.json \
+     ./apps/web/
+
+RUN --mount=type=cache,id=resumeforge-npm-web,target=/root/.npm \
+    npm ci \
+    --prefix ./apps/web \
+    --no-audit \
+    --no-fund
 
 
 # ============================================================
@@ -36,11 +54,14 @@ FROM node:22-bookworm-slim AS builder
 
 WORKDIR /app
 
-# Bring in dependency layers
-COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
-COPY --from=deps /app/packages/resume-schema ./packages/resume-schema
+# Reuse dependency layers.
+COPY --from=deps /app/apps/web/node_modules \
+                  ./apps/web/node_modules
 
-# Application source
+COPY --from=deps /app/packages/resume-schema \
+                  ./packages/resume-schema
+
+# Copy application source only after dependencies are available.
 COPY apps/web ./apps/web
 
 WORKDIR /app/apps/web
@@ -50,7 +71,7 @@ ENV NODE_ENV=production \
 
 RUN npm run build
 
-# Verify Next.js generated the expected standalone runtime.
+# Verify standalone output.
 RUN test -f .next/standalone/server.js \
     && test -d .next/static \
     && test -n "$(find .next/static -type f -print -quit)"
@@ -61,8 +82,6 @@ RUN test -f .next/standalone/server.js \
 # ============================================================
 FROM node:22-bookworm-slim AS runner
 
-RUN npm install -g npm@latest && npm cache clean --force
-
 WORKDIR /app
 
 ENV NODE_ENV=production \
@@ -70,21 +89,21 @@ ENV NODE_ENV=production \
     PORT=3000 \
     HOSTNAME=0.0.0.0
 
-# Dedicated non-root runtime user
+# Dedicated non-root runtime user.
 RUN groupadd --system --gid 1001 nextjs \
     && useradd --system --uid 1001 --gid nextjs nextjs
 
-# Next.js standalone server
+# Next.js standalone runtime.
 COPY --from=builder --chown=nextjs:nextjs \
     /app/apps/web/.next/standalone \
     ./
 
-# Static assets are not automatically included in standalone output.
+# Static assets.
 COPY --from=builder --chown=nextjs:nextjs \
     /app/apps/web/.next/static \
     ./.next/static
 
-# Public assets
+# Public assets.
 COPY --from=builder --chown=nextjs:nextjs \
     /app/apps/web/public \
     ./public
