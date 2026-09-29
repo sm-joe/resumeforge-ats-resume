@@ -64,6 +64,9 @@ WORKDIR /app
 RUN groupadd --system --gid 10001 resumeforge \
     && useradd --system --uid 10001 --gid resumeforge resumeforge
 
+RUN mkdir -p /app/data \
+    && chown resumeforge:resumeforge /app/data
+
 # Copy the API virtual environment.
 COPY --from=builder --chown=resumeforge:resumeforge \
     /app/apps/api/.venv \
