@@ -61,10 +61,14 @@ export function sanitizeRichTextHtml(
   if (!value) return "";
 
   if (typeof window === "undefined") {
+    if (!value) return "";
+
     return value
-      .replace(/<\/?(script|style|iframe|object|embed)[^>]*>/gi, "")
-      .replace(/\son[a-z]+\s*=\s*(["']).*?\1/gi, "")
-      .replace(/javascript\s*:/gi, "");
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#x27;");
   }
 
   const parser = new DOMParser();
