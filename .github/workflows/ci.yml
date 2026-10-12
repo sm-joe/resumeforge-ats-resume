@@ -207,7 +207,8 @@ jobs:
         with:
           version: "v0.75.0"
           image-ref: resumeforge-api:ci
-          format: table
+          format: sarif
+          output: trivy-api-results.sarif
           exit-code: "1"
           ignore-unfixed: true
           severity: CRITICAL,HIGH
@@ -235,7 +236,8 @@ jobs:
         with:
           version: "v0.75.0"
           image-ref: resumeforge-web:ci
-          format: table
+          format: sarif
+          output: trivy-web-results.sarif
           exit-code: "1"
           ignore-unfixed: true
           severity: CRITICAL,HIGH
