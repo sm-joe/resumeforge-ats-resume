@@ -162,7 +162,7 @@ The project is organized as a monorepo so the web editor, API, resume schema, an
 ### Run with Docker Compose
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/sm-joe/resumeforge-ats-resume.git
 cd resumeforge-ats-resume
 
 docker compose -f deploy/compose/compose.yaml up --build
