@@ -41,21 +41,28 @@ function richTextToPlainText(value: string) {
     return "";
   }
 
-  return value
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/li>\s*<li>/gi, "\n• ")
-    .replace(/<li>/gi, "• ")
-    .replace(/<\/li>/gi, "")
-    .replace(/<\/p>\s*<p>/gi, "\n\n")
-    .replace(/<[^>]*>/g, "")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
+  let text = value
+  .replace(/<br\s*\/?>/gi, "\n")
+  .replace(/<\/li>\s*<li>/gi, "\n• ")
+  .replace(/<li>/gi, "• ")
+  .replace(/<\/li>/gi, "")
+  .replace(/<\/p>\s*<p>/gi, "\n\n");
+
+  text = text.replace(/<(?!\s)[^>]*>/g, "");
+  const htmlEntities: Record<string, string> = {
+    "&nbsp;": " ",
+    "&amp;": "&",
+    "&lt;": "<",
+    "&gt;": ">",
+    "&quot;": '"',
+    "&#39;": "'",
+    "&apos;": "'"
+  };
+
+  return text
+  .replace(/&[a-z0-9#]+;/gi, (match) => htmlEntities[match.toLowerCase()] || match)
     .trim();
-}
+  }
 
 const pdfStyles = StyleSheet.create({
   page: {

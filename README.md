@@ -1,8 +1,33 @@
 # ResumeForge
 
-ResumeForge is a portable, ATS-friendly resume builder focused on structured resume data, a practical editing experience, automated analysis, and self-hosted deployment.
+<p align="center">
+  <strong>Portable, ATS-friendly resume creation with structured data, live editing, analysis, persistence, and self-hosted deployment.</strong><br>
+  Build professional resumes, analyze ATS readiness, match resumes against job requirements, and export your resume from a modern web application.
+</p>
 
-The project is designed as a modular monorepo so the editor, API, resume schema, analyzer, export workflows, and deployment configuration can evolve independently.
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React">
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite">
+  <img src="https://img.shields.io/badge/SQLAlchemy-D71F00?style=for-the-badge&logo=sqlalchemy&logoColor=white" alt="SQLAlchemy">
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/GitHub%20Actions-CI%2FCD-2088FF?style=flat-square&logo=githubactions&logoColor=white" alt="GitHub Actions">
+  <img src="https://img.shields.io/badge/Gitleaks-security-critical?style=flat-square&logo=git&logoColor=white" alt="Gitleaks">
+  <img src="https://img.shields.io/badge/Semgrep-security-1B1B1B?style=flat-square&logo=semgrep&logoColor=white" alt="Semgrep">
+  <img src="https://img.shields.io/badge/Trivy-container%20security-1904DA?style=flat-square&logo=aquasecurity&logoColor=white" alt="Trivy">
+  <img src="https://img.shields.io/badge/Dependabot-enabled-025E8C?style=flat-square&logo=dependabot&logoColor=white" alt="Dependabot">
+  <img src="https://img.shields.io/badge/License-Apache%202.0-blue?style=flat-square" alt="Apache 2.0 License">
+</p>
+
+ResumeForge is a modular, portable ATS-friendly resume platform built around structured resume data, live editing, automated analysis, persistence, and self-hosted deployment.
+
+The project is organized as a monorepo so the web editor, API, resume schema, analyzer, export workflows, and deployment configuration can evolve independently.
 
 ## Overview
 
