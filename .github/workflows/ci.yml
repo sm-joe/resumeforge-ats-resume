@@ -1,13 +1,11 @@
-name: CI RUN & Container Build Pipeline
+name: CI & Container Build Pipeline
 
 on:
   pull_request:
-    branches:
-      - main
+    branches: [main]
       
   push:
-    branches:
-      - main
+    branches: [main]
 
 permissions:
   contents: read
@@ -20,13 +18,14 @@ jobs:
   changes:
     name: Detect Changes
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       pull-requests: read
 
     outputs:
-      docker: ${{ steps.filter.outputs.docker }}
       ci: ${{ steps.filter.outputs.ci }}
+      docker: ${{ steps.filter.outputs.docker }}
     
     steps:
       - name: Checkout Repository
@@ -37,18 +36,30 @@ jobs:
         uses: dorny/paths-filter@v4
         with:
           filters: |
-            docker:
-              - 'apps/api/**'
-              - 'apps/web/**'
-              - 'deploy/**'
-
             ci:
               - 'apps/api/**'
               - 'apps/web/**'
-              - 'deploy/**'
-              - '.github/**'
-              - 'tests/**'
+              - 'apps/analyzer/**'
               - 'packages/**'
+              - 'tests/**'
+              - '.github/**'
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - 'package.json'
+              - 'package-lock.json'
+              - '**/pyproject.toml'
+              - '**/uv.lock'
+              - '**/package.json'
+              - '**/package-lock.json'
+
+            docker:
+              - 'apps/api/**'
+              - 'apps/web/**'
+              - 'apps/analyzer/**'
+              - 'packages/**'
+              - 'deploy/**'
+              - '**/Dockerfile'
+              - '.dockerignore'
 
   ci:
     name: CI Run
@@ -69,7 +80,9 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: apps/web/package-lock.json
+          cache-dependency-path: |
+            apps/web/package-lock.json
+            packages/resume-schema/package-lock.json
 
       - name: Install Node.js Dependencies
         run: |
@@ -95,6 +108,8 @@ jobs:
           cache-dependency-glob: |
             apps/api/uv.lock
             apps/analyzer/uv.lock
+            apps/api/pyproject.toml
+            apps/analyzer/pyproject.toml
 
       - name: Sync API Dependencies
         run: uv sync --project apps/api --locked
@@ -111,11 +126,11 @@ jobs:
   security:
     name: Security Scan
     runs-on: ubuntu-latest
-    needs: 
-      - changes
-      - ci
+    needs: changes
 
-    if: needs.changes.outputs.ci == 'true' && needs.ci.result == 'success'
+    if: >-
+      needs.changes.outputs.ci == 'true' ||
+      needs.changes.outputs.docker == 'true'
 
     permissions:
       contents: read
@@ -153,6 +168,12 @@ jobs:
         uses: astral-sh/setup-uv@v10.3.0
         with:
           version: "0.12.19"
+          enable-cache: true
+          cache-dependency-glob: |
+            apps/api/uv.lock
+            apps/analyzer/uv.lock
+            apps/api/pyproject.toml
+            apps/analyzer/pyproject.toml
 
       - name: Sync API Dependencies for Audit
         run: uv sync --project apps/api --locked
@@ -161,7 +182,7 @@ jobs:
         run: |
           uv pip install \
             --python apps/api/.venv/bin/python \
-            apps/analyzer
+            ./apps/analyzer
 
       - name: Audit Python Dependencies
         run: |
@@ -169,13 +190,16 @@ jobs:
           pip-audit --strict --desc --ignore-vuln PYSEC-0000
 
   docker:
-    name: Docker Build
+    name: Docker Build, Scan & Publish
     runs-on: ubuntu-latest
-    needs: 
-      - changes
-      - security
+    needs: [changes, ci, security]
 
-    if: needs.changes.outputs.docker == 'true' && needs.security.result == 'success'
+    if: >-
+      always() &&
+      needs.changes.result == 'success' &&
+      needs.changes.outputs.docker == 'true' &&
+      needs.security.result == 'success' &&
+      (needs.ci.result == 'success' || needs.ci.result == 'skipped')
 
     permissions:
       contents: read
@@ -191,64 +215,6 @@ jobs:
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Build API Image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: apps/api/Dockerfile
-          load: true
-          push: false
-          tags: resumeforge-api:ci
-          cache-from: type=gha,scope=resumeforge-api
-          cache-to: type=gha,mode=max,scope=resumeforge-api
-
-      - name: Scan API Image
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          version: "v0.75.0"
-          image-ref: resumeforge-api:ci
-          format: sarif
-          output: trivy-api-results.sarif
-          exit-code: "1"
-          ignore-unfixed: true
-          severity: CRITICAL,HIGH
-
-      - name: Upload API Trivy Results
-        if: always() && github.event_name == 'push'
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: trivy-api-results.sarif
-          category: trivy-api-container
-
-      - name: Build Web Image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: apps/web/Dockerfile
-          load: true
-          push: false
-          tags: resumeforge-web:ci
-          cache-from: type=gha,scope=resumeforge-web
-          cache-to: type=gha,mode=max,scope=resumeforge-web
-
-      - name: Scan Web Image
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          version: "v0.75.0"
-          image-ref: resumeforge-web:ci
-          format: sarif
-          output: trivy-web-results.sarif
-          exit-code: "1"
-          ignore-unfixed: true
-          severity: CRITICAL,HIGH
-
-      - name: Upload Web Trivy Results
-        if: always() && github.event_name == 'push'
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: trivy-web-results.sarif
-          category: trivy-web-container
-
       - name: Login to GHCR
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/login-action@v4
@@ -257,28 +223,133 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push API Image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      # Build once. PRs use a local image; main pushes a temporary
+      # tag that is promoted only after the vulnerability scan passes.
+      - name: Build API Image
+        id: build-api
         uses: docker/build-push-action@v7
         with:
           context: .
           file: apps/api/Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/resumeforge-api:${{ github.sha }}
-            ghcr.io/${{ github.repository_owner }}/resumeforge-api:latest
-          cache-from: type=gha
+          load: ${{ github.event_name == 'pull_request' }}
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: >-
+            ${{ github.event_name == 'push' && github.ref == 'refs/heads/main'
+             && format('ghcr.io/{0}/resumeforge-api:{1}-ci', github.repository_owner, github.sha)
+             || 'resumeforge-api:ci' }}
+          cache-from: type=gha,scope=resumeforge-api
+          cache-to: type=gha,mode=max,scope=resumeforge-api
 
-      - name: Push Web Image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: Scan API Image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          version: "v0.75.0"
+          image-ref: >-
+            ${{ github.event_name == 'push' && github.ref == 'refs/heads/main'
+             && format('ghcr.io/{0}/resumeforge-api:{1}-ci',
+             github.repository_owner, github.sha) || 'resumeforge-api:ci' }}
+          format: sarif
+          output: trivy-api-results.sarif
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
+
+      - name: Upload API Trivy Results
+        if: always() && github.event_name == 'push' && hashFiles('trivy-api-results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-api-results.sarif
+          category: trivy-api-container
+
+      - name: Build Web Image
+        id: build-web
         uses: docker/build-push-action@v7
         with:
           context: .
           file: apps/web/Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/resumeforge-web:${{ github.sha }}
-            ghcr.io/${{ github.repository_owner }}/resumeforge-web:latest
-          cache-from: type=gha
+          load: ${{ github.event_name == 'pull_request' }}
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: >-
+            ${{ github.event_name == 'push' && github.ref == 'refs/heads/main'
+             && format('ghcr.io/{0}/resumeforge-web:{1}-ci', github.repository_owner, github.sha)
+             || 'resumeforge-web:ci' }}
+          cache-from: type=gha,scope=resumeforge-web
+          cache-to: type=gha,mode=max,scope=resumeforge-web
 
+      - name: Scan Web Image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          version: "v0.75.0"
+          image-ref: >-
+            ${{ github.event_name == 'push' && github.ref == 'refs/heads/main'
+             && format('ghcr.io/{0}/resumeforge-web:{1}-ci', github.repository_owner, github.sha)
+             || 'resumeforge-web:ci' }}
+          format: sarif
+          output: trivy-web-results.sarif
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
 
+      - name: Upload Web Trivy Results
+        if: always() && github.event_name == 'push' && hashFiles('trivy-web-results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-web-results.sarif
+          category: trivy-web-container
+
+      # Promote the exact scanned images without rebuilding.
+      - name: Publish API Image Tags
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/resumeforge-api
+          SHA: ${{ github.sha }}
+        run: |
+          docker buildx imagetools create --tag "$IMAGE:$SHA" --tag "$IMAGE:latest" "$IMAGE:$SHA-ci"
+
+      - name: Publish Web Image Tags
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/resumeforge-web
+          SHA: ${{ github.sha }}
+        run: |
+          docker buildx imagetools create --tag "$IMAGE:$SHA" --tag "$IMAGE:latest" "$IMAGE:$SHA-ci"
+
+  pipeline-status:
+    name: Pipeline Status
+    runs-on: ubuntu-latest
+    needs: [changes, ci, security, docker]
+    if: always()
+
+    permissions:
+      contents: read
+
+    steps:
+      
+      - name: Verify Pipeline Results
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          CI_RESULT: ${{ needs.ci.result }}
+          SECURITY_RESULT: ${{ needs.security.result }}
+          DOCKER_RESULT: ${{ needs.docker.result }}
+        run: |
+          if [[ "$CHANGES_RESULT" != "success" ]]; then
+            echo "Change detection failed."
+            exit 1
+          fi
+
+          if [[ "$CI_RESULT" == "failure" || "$CI_RESULT" == "cancelled" ]]; then
+            echo "CI failed or was cancelled."
+            exit 1
+          fi
+
+          if [[ "$SECURITY_RESULT" == "failure" || "$SECURITY_RESULT" == "cancelled" ]]; then
+            echo "Security checks failed or were cancelled."
+            exit 1
+          fi
+
+          if [[ "$DOCKER_RESULT" == "failure" || "$DOCKER_RESULT" == "cancelled" ]]; then
+            echo "Docker build, scan, or publishing failed."
+            exit 1
+          fi
+
+          echo "All applicable pipeline jobs passed."
