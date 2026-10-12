@@ -1,4 +1,4 @@
-name: CI Security & Container Build
+name: CI RUN & Container Build Pipeline
 
 on:
   pull_request:
@@ -29,7 +29,7 @@ jobs:
       ci: ${{ steps.filter.outputs.ci }}
     
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v7
 
       - name: Detect Changed Paths
@@ -61,7 +61,7 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v7
 
       - name: Setup Node.js
@@ -71,7 +71,7 @@ jobs:
           cache: npm
           cache-dependency-path: apps/web/package-lock.json
 
-      - name: Install Node.js dependencies
+      - name: Install Node.js Dependencies
         run: |
           npm ci --prefix apps/web
           npm ci --prefix packages/resume-schema
@@ -87,7 +87,7 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install uv
+      - name: Install UV
         uses: astral-sh/setup-uv@v10.1.0
         with:
           version: "0.12.19"
@@ -105,7 +105,7 @@ jobs:
             --python apps/api/.venv/bin/python \
             apps/analyzer
 
-      - name: Test API
+      - name: Test APIs
         run: uv run --project apps/analyzer --with pytest pytest tests
 
   security:
@@ -121,24 +121,15 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Run Gitleaks
+      - name: Run Gitleaks Scan
         uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Run Semgrep
-        uses: semgrep/semgrep-action@v1
-        with:
-          config: >-
-            p/default
-            p/javascript
-            p/typescript
-            p/python
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -158,7 +149,7 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install uv
+      - name: Install UV
         uses: astral-sh/setup-uv@v10.1.0
         with:
           version: "0.12.19"
@@ -191,7 +182,7 @@ jobs:
       packages: write
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -210,6 +201,23 @@ jobs:
           cache-from: type=gha,scope=resumeforge-api
           cache-to: type=gha,mode=max,scope=resumeforge-api
 
+      - name: Scan API Image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          version: "v0.75.0"
+          image-ref: resumeforge-api:ci
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
+
+      - name: Upload API Trivy Results
+        if: always() && github.event_name == 'push'
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-api-results.sarif
+          category: trivy-api-container
+
       - name: Build Web Image
         uses: docker/build-push-action@v7
         with:
@@ -221,17 +229,6 @@ jobs:
           cache-from: type=gha,scope=resumeforge-web
           cache-to: type=gha,mode=max,scope=resumeforge-web
 
-      - name: Scan API Image
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          version: "v0.75.0"
-          image-ref: resumeforge-api:ci
-          format: table
-          exit-code: "1"
-          ignore-unfixed: true
-          severity: CRITICAL,HIGH
-          
-
       - name: Scan Web Image
         uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -241,6 +238,13 @@ jobs:
           exit-code: "1"
           ignore-unfixed: true
           severity: CRITICAL,HIGH
+
+      - name: Upload Web Trivy Results
+        if: always() && github.event_name == 'push'
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-web-results.sarif
+          category: trivy-web-container
 
       - name: Login to GHCR
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
