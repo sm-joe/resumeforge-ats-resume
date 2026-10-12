@@ -1,4 +1,6 @@
+import eslint from "@eslint/js";
 import { defineConfig, globalIgnores } from "eslint/config";
+import tseslint from "typescript-eslint";
 
 export default defineConfig([
   globalIgnores([
@@ -6,6 +8,9 @@ export default defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    "node_modules/**",
   ]),
+
+  eslint.configs.recommended,
+
+  ...tseslint.configs.recommended,
 ]);

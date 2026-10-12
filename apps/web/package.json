@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "preinstall": "npx npm-force-resolutions",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -14,15 +15,20 @@
     "@resumeforge/resume-schema": "file:../../packages/resume-schema",
     "next": "16.4.0",
     "react": "19.3.0",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "undici": "^6.28.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^10.11.0",
+    "eslint": "^9.39.5",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "brace-expansion": "^5.0.11",
+    "undici": "^6.28.1"
   }
 }

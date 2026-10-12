@@ -7,6 +7,10 @@ FROM node:22-bookworm-slim AS deps
 
 WORKDIR /app
 
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
+
 # ------------------------------------------------------------
 # Shared resume schema
 # Copy dependency metadata first so this layer is cached
@@ -54,6 +58,10 @@ FROM node:22-bookworm-slim AS builder
 
 WORKDIR /app
 
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
+
 # Reuse dependency layers.
 COPY --from=deps /app/apps/web/node_modules \
                   ./apps/web/node_modules
@@ -76,7 +84,6 @@ RUN test -f .next/standalone/server.js \
     && test -d .next/static \
     && test -n "$(find .next/static -type f -print -quit)"
 
-
 # ============================================================
 # STAGE 3: Minimal Production Runtime
 # ============================================================
@@ -85,6 +92,13 @@ FROM node:22-bookworm-slim AS runner
 RUN npm install -g npm@latest && npm cache clean --force
 
 WORKDIR /app
+
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends perl-base && \
+    rm -rf /var/lib/apt/lists/* \
+    && rm -rf /usr/local/lib/node_modules/npm \
+    && rm -f /usr/local/bin/npm /usr/local/bin/npx
 
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
