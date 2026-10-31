@@ -13,6 +13,8 @@ RUN apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
+        tzdata \
+    && dpkg-query -W -f='${Version}\n' tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy uv binaries
@@ -51,6 +53,12 @@ COPY apps/api/src ./apps/api/src
 
 # --- STAGE 2: Runner ---
 FROM python:3.13-slim-bookworm AS runner
+
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends tzdata \
+    && dpkg-query -W -f='${Version}\n' tzdata \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN rm -rf /usr/local/lib/python3.13/site-packages/pip
 
