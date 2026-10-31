@@ -93,6 +93,8 @@ RUN npm install -g npm@latest && npm cache clean --force
 
 WORKDIR /app
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
