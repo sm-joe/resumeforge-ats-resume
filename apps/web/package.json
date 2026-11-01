@@ -14,7 +14,7 @@
     "@react-pdf/renderer": "^4.9.0",
     "@resumeforge/resume-schema": "file:../../packages/resume-schema",
     "next": "^16.4.3",
-    "react": "19.3.0",
+    "react": "19.3.1",
     "react-dom": "19.3.0",
     "undici": "^6.28.1"
   },
