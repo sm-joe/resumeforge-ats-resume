@@ -4,7 +4,7 @@ from pathlib import Path
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.shared import Inches, Pt
+from docx.shared import Inches, Mm, Pt
 
 from ..models import Resume
 
@@ -152,6 +152,12 @@ def resume_to_docx(
     document = Document()
 
     section = document.sections[0]
+    if resume.design.pageSize == "LETTER":
+        section.page_width = Inches(8.5)
+        section.page_height = Inches(11)
+    else:
+        section.page_width = Mm(210)
+        section.page_height = Mm(297)
     section.top_margin = Inches(0.55)
     section.bottom_margin = Inches(0.55)
     section.left_margin = Inches(0.65)
@@ -402,10 +408,9 @@ def resume_to_docx(
 
             add_heading(custom_section.title)
 
-            if custom_section.content:
-                document.add_paragraph(
-                    custom_section.content
-                )
+            for item in custom_section.items:
+                if item.strip():
+                    _add_rich_text(document, item)
 
     if output_path is not None:
         output = Path(output_path)
