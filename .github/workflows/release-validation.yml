@@ -127,6 +127,7 @@ jobs:
     needs: [security, codeql, kubernetes]
     permissions:
       contents: write
+      actions: read
       packages: write
       id-token: write
     steps:
@@ -206,3 +207,92 @@ jobs:
       - name: Stop Acceptance Stack
         if: always()
         run: docker compose -f deploy/compose/compose.yaml down --remove-orphans
+
+      - name: Generate API SPDX SBOM
+        uses: anchore/sbom-action@v0.24.3
+        with:
+          image: resumeforge-api:release-audit
+          format: spdx-json
+          output-file: sbom-api.spdx.json
+          artifact-name: resumeforge-api-sbom
+          upload-release-assets: "false"
+
+      - name: Generate Web SPDX SBOM
+        uses: anchore/sbom-action@v0.24.3
+        with:
+          image: resumeforge-web:release-audit
+          format: spdx-json
+          output-file: sbom-web.spdx.json
+          artifact-name: resumeforge-web-sbom
+          upload-release-assets: "false"
+
+      - name: Verify Stable Publication Request
+        if: ${{ inputs.publish }}
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "Stable publication must run from main"
+            exit 1
+          fi
+          if [[ "$RELEASE_TAG" != "v1.0.0" ]]; then
+            echo "Unsupported stable tag: $RELEASE_TAG"
+            exit 1
+          fi
+          git fetch --tags --force
+          if git rev-parse -q --verify "refs/tags/$RELEASE_TAG" >/dev/null; then
+            echo "Release tag already exists; immutable release refused"
+            exit 1
+          fi
+
+      - name: Authenticate GHCR For Publication
+        if: ${{ inputs.publish }}
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Exact Scanned Release Images
+        if: ${{ inputs.publish }}
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          : > release-evidence.txt
+          for component in api web; do
+            image="ghcr.io/${OWNER}/resumeforge-${component}"
+            docker tag "resumeforge-${component}:release-audit" "${image}:${RELEASE_TAG}"
+            docker tag "resumeforge-${component}:release-audit" "${image}:${GITHUB_SHA}"
+            docker push "${image}:${RELEASE_TAG}"
+            docker push "${image}:${GITHUB_SHA}"
+            digest="$(docker buildx imagetools inspect "${image}:${RELEASE_TAG}" --format '{{.Manifest.Digest}}')"
+            printf '%s@%s\n' "${image}" "${digest}" | tee -a release-evidence.txt
+          done
+
+      - name: Install Cosign
+        if: ${{ inputs.publish }}
+        uses: sigstore/cosign-installer@v4.0.0
+
+      - name: Sign Release Image Digests With OIDC
+        if: ${{ inputs.publish }}
+        run: |
+          set -euo pipefail
+          while IFS= read -r image; do
+            cosign sign --yes "$image"
+          done < release-evidence.txt
+
+      - name: Publish Stable GitHub Release
+        if: ${{ inputs.publish }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            sbom-api.spdx.json \
+            sbom-web.spdx.json \
+            release-evidence.txt \
+            --target "$GITHUB_SHA" \
+            --title "ResumeForge $RELEASE_TAG" \
+            --notes-file docs/releases/v1.0.0.md
