@@ -37,6 +37,7 @@ export function ResumeOverview({
 
   return (
     <article
+      className={`rf-template-${["modern", "classic", "minimal", "executive"].includes(resume.design?.template) ? resume.design.template : "modern"}`}
       style={{
         display: "flex",
         flexDirection: "column",
