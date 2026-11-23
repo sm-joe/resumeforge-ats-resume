@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createResume, deleteResume, listResumes, updateResume } from "@/lib/api";
+import { createResume, deleteResume, listResumes, updateResume, trackResumeRevision } from "@/lib/api";
 import { ResumeSchema, type Resume } from "@resumeforge/resume-schema";
 
 const ACTIVE_DRAFT_KEY = "resumeforge:resume:draft";
 
 function activate(resume: Resume) {
+  trackResumeRevision(resume);
   window.localStorage.setItem(ACTIVE_DRAFT_KEY, JSON.stringify(resume));
   // A full navigation remounts the editor and restores the selected draft.
   window.location.assign("/");
