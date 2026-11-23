@@ -123,6 +123,9 @@ jobs:
       - name: Test APIs
         run: uv run --project apps/analyzer --with pytest pytest tests
 
+      - name: Test FastAPI Export Security
+        run: uv run --project apps/api --with pytest pytest apps/api/tests
+
   security:
     name: Security Scan
     runs-on: ubuntu-latest
