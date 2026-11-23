@@ -103,11 +103,22 @@ class ResumeMetadata(BaseModel):
     updatedAt: str
 
 
+class ResumeDesign(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    template: str = "modern"
+    pageSize: str = "A4"
+    fontFamily: str = "Inter"
+    accentColor: str = "#24312d"
+    spacing: str = "comfortable"
+
+
 class Resume(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     schemaVersion: str
     metadata: ResumeMetadata
+    design: ResumeDesign = ResumeDesign()
     profile: Profile
     summary: str = ""
     experience: list[Experience] = []
