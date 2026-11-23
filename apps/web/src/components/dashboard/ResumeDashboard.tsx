@@ -57,14 +57,26 @@ export function ResumeDashboard() {
 
   useEffect(() => {
     let cancelled = false;
+    const hadOwnershipKey = !!window.localStorage.getItem("resumeforge:owner-key");
     listResumes()
       .then((records) => {
         // Prefer the browser draft when an autosave is still in flight.
         try {
           const raw = window.localStorage.getItem(ACTIVE_DRAFT_KEY);
           if (raw) {
-            const draft = JSON.parse(raw) as Resume;
+            let draft = JSON.parse(raw) as Resume;
             if (draft.metadata?.id && draft.profile && draft.skills) {
+              if (!hadOwnershipKey || draft.metadata.id === "demo-resume-001") {
+                draft = {
+                  ...draft,
+                  metadata: {
+                    ...draft.metadata,
+                    id: crypto.randomUUID(),
+                    updatedAt: new Date().toISOString(),
+                  },
+                };
+                window.localStorage.setItem(ACTIVE_DRAFT_KEY, JSON.stringify(draft));
+              }
               records = [
                 draft,
                 ...records.filter((r) => r.metadata.id !== draft.metadata.id),
