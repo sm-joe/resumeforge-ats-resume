@@ -1,8 +1,27 @@
 import { z } from "zod";
 
+const isSafePublicUrl = (value: string) => {
+  try {
+    const url = new URL(value);
+    return (
+      (url.protocol === "http:" || url.protocol === "https:") &&
+      Boolean(url.hostname) &&
+      !url.username &&
+      !url.password
+    );
+  } catch {
+    return false;
+  }
+};
+
+const OptionalPublicUrlSchema = z.union([
+  z.literal(""),
+  z.string().url().refine(isSafePublicUrl, "Only HTTP(S) URLs are supported"),
+]).optional();
+
 export const LinkSchema = z.object({
   label: z.string().min(1),
-  url: z.string().url(),
+  url: z.string().url().refine(isSafePublicUrl, "Only HTTP(S) URLs are supported"),
 });
 
 export const ProfileSchema = z.object({
@@ -39,7 +58,7 @@ export const ProjectSchema = z.object({
   id: z.string(),
   name: z.string().min(1),
   description: z.string().optional(),
-  url: z.string().url().optional(),
+  url: OptionalPublicUrlSchema,
   technologies: z.array(z.string()).default([]),
   bullets: z.array(z.string()).default([]),
 });
@@ -49,7 +68,7 @@ export const CertificationSchema = z.object({
   name: z.string().min(1),
   issuer: z.string().optional(),
   date: z.string().optional(),
-  url: z.string().url().optional(),
+  url: OptionalPublicUrlSchema,
 });
 
 export const LanguageSchema = z.object({
