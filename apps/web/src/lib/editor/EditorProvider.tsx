@@ -50,6 +50,7 @@ export function EditorProvider({
       resume: initialResume,
       isDirty: false,
       lastSavedAt: null,
+      saveError: null,
     },
   );
 
@@ -228,10 +229,11 @@ export function EditorProvider({
           dispatch({ type: "editor/mark-saved", savedAt });
         }
       } catch (error) {
-        console.error(
-          "Failed to auto-save ResumeForge resume:",
-          error,
-        );
+        console.error("Failed to auto-save ResumeForge resume:", error);
+        dispatch({
+          type: "editor/save-error",
+          message: error instanceof Error ? error.message : "Unable to save resume.",
+        });
       }
     }, 600);
 
