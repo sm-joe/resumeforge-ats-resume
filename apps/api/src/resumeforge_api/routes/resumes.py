@@ -7,6 +7,9 @@ from resumeforge_api.db import ResumeRecord, SessionLocal
 from resumeforge_api.models import Resume
 
 
+DEMO_RESUME_ID = "demo-resume-001"
+
+
 router = APIRouter(
     prefix="/api/v1/resumes",
     tags=["resumes"],
@@ -30,6 +33,9 @@ def list_resumes() -> list[Resume]:
 
 @router.post("", response_model=Resume, status_code=201)
 def create_resume(resume: Resume) -> Resume:
+    if resume.metadata.id == DEMO_RESUME_ID:
+        raise HTTPException(status_code=403, detail="Demo resume is read-only")
+
     now = datetime.now(timezone.utc)
 
     record = ResumeRecord(
@@ -83,6 +89,9 @@ def update_resume(
     resume_id: str,
     resume: Resume,
 ) -> Resume:
+    if resume_id == DEMO_RESUME_ID:
+        raise HTTPException(status_code=403, detail="Demo resume is read-only")
+
     if resume.metadata.id != resume_id:
         raise HTTPException(
             status_code=400,
@@ -113,6 +122,9 @@ def update_resume(
 
 @router.delete("/{resume_id}", status_code=204)
 def delete_resume(resume_id: str) -> None:
+    if resume_id == DEMO_RESUME_ID:
+        raise HTTPException(status_code=403, detail="Demo resume is read-only")
+
     with SessionLocal() as session:
         record = session.get(
             ResumeRecord,
