@@ -2,6 +2,29 @@ import { describe, expect, it } from "vitest";
 import { ResumeSchema } from "../../packages/resume-schema/src/index.js";
 
 describe("ResumeSchema", () => {
+  it("rejects unsafe public link schemes and embedded credentials", () => {
+    const base = {
+      schemaVersion: "1.0",
+      metadata: { id: "security", title: "Security", updatedAt: "2026-11-23" },
+      profile: { name: "Jane Example", links: [] as { label: string; url: string }[] },
+      skills: { categories: [] },
+    };
+    for (const url of [
+      "javascript:alert(1)",
+      "data:text/html,hello",
+      "https://user:password@example.com/secret",
+    ]) {
+      expect(ResumeSchema.safeParse({
+        ...base,
+        profile: { ...base.profile, links: [{ label: "Unsafe", url }] },
+      }).success).toBe(false);
+    }
+    expect(ResumeSchema.safeParse({
+      ...base,
+      profile: { ...base.profile, links: [{ label: "Portfolio", url: "https://example.com" }] },
+    }).success).toBe(true);
+  });
+
   it("accepts a valid resume", () => {
     const resume = {
       schemaVersion: "1.0",
