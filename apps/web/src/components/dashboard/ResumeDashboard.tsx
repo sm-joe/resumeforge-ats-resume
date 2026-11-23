@@ -59,6 +59,21 @@ export function ResumeDashboard() {
     let cancelled = false;
     listResumes()
       .then((records) => {
+        // Prefer the browser draft when an autosave is still in flight.
+        try {
+          const raw = window.localStorage.getItem(ACTIVE_DRAFT_KEY);
+          if (raw) {
+            const draft = JSON.parse(raw) as Resume;
+            if (draft.metadata?.id && draft.profile && draft.skills) {
+              records = [
+                draft,
+                ...records.filter((r) => r.metadata.id !== draft.metadata.id),
+              ];
+            }
+          }
+        } catch {
+          // Corrupt local data must not block the remote list.
+        }
         if (!cancelled) setResumes(records);
       })
       .catch(() => {
@@ -108,7 +123,12 @@ export function ResumeDashboard() {
   function remove(resume: Resume) {
     if (!window.confirm(`Permanently delete "${resume.metadata.title}"? This cannot be undone.`)) return;
     void run(async () => {
-      await deleteResume(resume.metadata.id);
+      try {
+        await deleteResume(resume.metadata.id);
+      } catch (error) {
+        // Browser-only drafts may not yet exist on the remote API.
+        if (!(error instanceof Error && error.message.endsWith(": 404"))) throw error;
+      }
       setResumes((current) => current.filter((r) => r.metadata.id !== resume.metadata.id));
       try {
         const active = window.localStorage.getItem(ACTIVE_DRAFT_KEY);
