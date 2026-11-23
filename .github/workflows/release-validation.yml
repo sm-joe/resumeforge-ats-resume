@@ -116,3 +116,41 @@ jobs:
           exit-code: "1"
           ignore-unfixed: true
           severity: CRITICAL,HIGH
+
+      - name: Tag Scanned Images For Local Acceptance
+        run: |
+          docker tag resumeforge-api:release-audit resumeforge-api:local
+          docker tag resumeforge-web:release-audit resumeforge-web:local
+
+      - name: Start Production-Like Compose Stack
+        run: docker compose -f deploy/compose/compose.yaml up -d --no-build --wait
+
+      - name: Setup Node For Browser Acceptance
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Install Browser Test Dependencies
+        run: npm install --prefix tests/e2e --no-audit --no-fund
+
+      - name: Install Playwright Chromium
+        run: npm exec --prefix tests/e2e -- playwright install --with-deps chromium
+
+      - name: Run End-to-End Product Acceptance
+        env:
+          RESUMEFORGE_E2E_BASE_URL: http://127.0.0.1:3000
+        run: npm run test --prefix tests/e2e
+
+      - name: Upload Browser Failure Evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resumeforge-playwright-evidence
+          path: |
+            tests/e2e/playwright-report/
+            tests/e2e/test-results/
+          if-no-files-found: ignore
+
+      - name: Stop Acceptance Stack
+        if: always()
+        run: docker compose -f deploy/compose/compose.yaml down --remove-orphans
