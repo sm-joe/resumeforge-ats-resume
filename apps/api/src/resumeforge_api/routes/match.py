@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from resumeforge_analyzer import match_job_description
 
@@ -14,7 +14,7 @@ router = APIRouter(
 
 class MatchRequest(BaseModel):
     resume: Resume
-    job_description: str
+    job_description: str = Field(min_length=30, max_length=20_000)
 
 
 @router.post("")
