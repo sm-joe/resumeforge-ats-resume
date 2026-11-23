@@ -9,6 +9,7 @@ import { ResumeEditor } from "@/components/editor/ResumeEditor";
 import { ResumeOverview } from "@/components/resume/ResumeOverview";
 import { SectionOrderEditor } from "@/components/resume/SectionOrderEditor";
 import { ExportActions } from "@/components/editor/ExportActions";
+import { ResumeHistory } from "@/components/editor/ResumeHistory";
 import { useEditor } from "@/lib/editor/EditorProvider";
 import { ResumePrint } from "@/components/resume/ResumePrint";
 
@@ -222,6 +223,7 @@ export function ResumeWorkspace() {
             <Link href="/resumes" style={{ color: "#304f43", fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 4 }}>
               My Resumes
             </Link>
+            <ResumeHistory />
             <ExportActions />
           </div>
         </header>
