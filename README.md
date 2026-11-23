@@ -410,6 +410,12 @@ Persistent API data is stored under:
 
 and mounted outside the API container.
 
+## End-to-End Release Acceptance
+
+The manual **Release Security & Docker Validation** GitHub Actions workflow builds and scans the API and web images, launches the same images through Docker Compose, and then runs Playwright Chromium acceptance tests. The tests cover creating/opening resumes, template selection, PDF/DOCX downloads, resume-quality analysis, and isolation between independent browser contexts. Browser failure traces and HTML reports are uploaded for investigation.
+
+This workflow intentionally does **not** run for ordinary pull requests or pushes. Before any stable release, manually trigger both this workflow and CodeQL and verify all checks are green.
+
 ## CI/CD
 
 ResumeForge uses a sequential GitHub Actions pipeline.
