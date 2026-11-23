@@ -123,7 +123,9 @@ jobs:
 
   docker:
     name: Docker Build & Vulnerability Scan
-    runs-on: ubuntu-latest
+    # Playwright's Chromium dependencies are supported on Ubuntu 24.04;
+    # ubuntu-latest currently resolves to an unsupported Ubuntu 26.04 runner.
+    runs-on: ubuntu-24.04
     needs: [security, codeql, kubernetes]
     permissions:
       contents: write
