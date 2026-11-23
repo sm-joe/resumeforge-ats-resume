@@ -72,6 +72,15 @@ COPY --from=deps /app/packages/resume-schema \
 # Copy application source only after dependencies are available.
 COPY apps/web ./apps/web
 
+# The shared local package can be installed as a file dependency whose
+# resolution differs between npm and Docker build contexts. Materialize the
+# already-built workspace schema at the import path used by Next.js.
+# Keep its installed dependencies (including zod) inside the package tree.
+RUN mkdir -p /app/apps/web/node_modules/@resumeforge \
+    && rm -rf /app/apps/web/node_modules/@resumeforge/resume-schema \
+    && cp -a /app/packages/resume-schema /app/apps/web/node_modules/@resumeforge/resume-schema \
+    && test -f /app/apps/web/node_modules/@resumeforge/resume-schema/dist/index.js
+
 WORKDIR /app/apps/web
 
 ENV NODE_ENV=production \
