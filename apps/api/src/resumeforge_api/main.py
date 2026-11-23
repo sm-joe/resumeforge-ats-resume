@@ -13,7 +13,7 @@ from .models import Resume
 
 app = FastAPI(
     title="ResumeForge API",
-    version="0.1.0",
+    version="1.0.0",
 )
 
 init_db()
