@@ -221,6 +221,15 @@ export function ResumeWorkspace() {
           </div>
 
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
+            {state.saveError ? (
+              <p role="alert" style={{ color: "#b42318", background: "#fef3f2", padding: "8px", maxWidth: 300, borderRadius: 6, fontSize: 12 }}>
+                {state.saveError}
+              </p>
+            ) : state.isDirty ? (
+              <span role="status" style={{ fontSize: 12, color: "#667085" }}>Unsaved changes</span>
+            ) : state.lastSavedAt ? (
+              <span role="status" style={{ fontSize: 12, color: "#067647" }}>Saved</span>
+            ) : null}
             <Link href="/resumes" style={{ color: "#304f43", fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 4 }}>
               My Resumes
             </Link>
