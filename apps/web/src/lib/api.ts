@@ -56,6 +56,14 @@ export async function getDemoResume(): Promise<Resume> {
   return response.json() as Promise<Resume>;
 }
 
+export async function listResumes(): Promise<Resume[]> {
+  const response = await apiFetch("/api/v1/resumes", { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`Failed to list resumes: ${response.status}`);
+  }
+  return response.json() as Promise<Resume[]>;
+}
+
 export async function getResume(
   resumeId: string,
 ): Promise<Resume> {
