@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from sqlalchemy import JSON, DateTime, String, create_engine, text
+from sqlalchemy import JSON, DateTime, Integer, String, create_engine, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
 
@@ -29,6 +29,7 @@ class ResumeRecord(Base):
         primary_key=True,
     )
     owner_key_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
     title: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
@@ -74,5 +75,9 @@ def init_db() -> None:
         if columns and "owner_key_hash" not in columns:
             connection.execute(
                 text("ALTER TABLE resumes ADD COLUMN owner_key_hash VARCHAR(64)")
+            )
+        if columns and "revision" not in columns:
+            connection.execute(
+                text("ALTER TABLE resumes ADD COLUMN revision INTEGER NOT NULL DEFAULT 1")
             )
     Base.metadata.create_all(bind=engine)
