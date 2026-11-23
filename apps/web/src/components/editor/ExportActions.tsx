@@ -716,15 +716,16 @@ function ResumePdfDocument({
                   {customSection.title}
                 </PdfSectionTitle>
 
-                {customSection.content && (
-                  <Text
-                    style={pdfStyles.paragraph}
-                  >
-                    {richTextToPlainText(
-                      customSection.content,
-                    )}
-                  </Text>
-                )}
+                {customSection.items
+                  ?.filter((item: string) => item.trim())
+                  .map((item: string, itemIndex: number) => (
+                    <Text
+                      key={`item-${itemIndex}`}
+                      style={pdfStyles.paragraph}
+                    >
+                      {richTextToPlainText(item)}
+                    </Text>
+                  ))}
               </View>
             );
           },
@@ -769,7 +770,7 @@ export function ExportActions() {
       anchor.click();
       anchor.remove();
 
-      URL.revokeObjectURL(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (exportError) {
       setError(
         exportError instanceof Error
@@ -840,7 +841,7 @@ export function ExportActions() {
       anchor.click();
       anchor.remove();
 
-      URL.revokeObjectURL(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (exportError) {
       setError(
         exportError instanceof Error
