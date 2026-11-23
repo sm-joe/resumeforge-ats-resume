@@ -220,11 +220,20 @@ function splitBullets(value: string) {
 
 function PdfSectionTitle({
   children,
+  variant = "modern",
 }: {
   children: string;
+  variant?: string;
 }) {
+  const theme = variant === "classic"
+    ? { fontFamily: "Times-Roman", fontSize: 11, textTransform: "none" as const }
+    : variant === "minimal"
+      ? { fontSize: 9, borderBottomWidth: 0, letterSpacing: 1 }
+      : variant === "executive"
+        ? { fontSize: 11, borderBottomWidth: 1.5, letterSpacing: 0.7 }
+        : {};
   return (
-    <Text style={pdfStyles.sectionTitle}>
+    <Text style={[pdfStyles.sectionTitle, theme]}>
       {children}
     </Text>
   );
@@ -242,6 +251,9 @@ function ResumePdfDocument({
   ].filter(Boolean);
 
   const links = resume.profile.links || [];
+  const template = resume.design?.template ?? "modern";
+  const isSerif = template === "classic" || template === "executive";
+
 
   return (
     <Document
@@ -253,11 +265,11 @@ function ResumePdfDocument({
     >
       <Page
         size={resume.design?.pageSize === "LETTER" ? "LETTER" : "A4"}
-        style={pdfStyles.page}
+        style={[pdfStyles.page, { fontFamily: isSerif ? "Times-Roman" : "Helvetica" }]}
         wrap
       >
-        <View style={pdfStyles.header}>
-          <Text style={pdfStyles.name}>
+        <View style={[pdfStyles.header, template === "executive" ? { borderBottomWidth: 2, borderBottomColor: "#24312d", paddingBottom: 10 } : {}]}>
+          <Text style={[pdfStyles.name, { fontFamily: isSerif ? "Times-Bold" : "Helvetica-Bold", fontSize: template === "minimal" ? 19 : template === "executive" ? 24 : 21 }]}>
             {resume.profile.name || "Your Name"}
           </Text>
 
@@ -291,7 +303,7 @@ function ResumePdfDocument({
 
         {resume.summary?.trim() && (
           <View style={pdfStyles.section}>
-            <PdfSectionTitle>
+            <PdfSectionTitle variant={template}>
               Professional Summary
             </PdfSectionTitle>
 
@@ -305,7 +317,7 @@ function ResumePdfDocument({
 
         {resume.experience?.length > 0 && (
           <View style={pdfStyles.section}>
-            <PdfSectionTitle>
+            <PdfSectionTitle variant={template}>
               Experience
             </PdfSectionTitle>
 
@@ -405,7 +417,7 @@ function ResumePdfDocument({
 
         {resume.education?.length > 0 && (
           <View style={pdfStyles.section}>
-            <PdfSectionTitle>
+            <PdfSectionTitle variant={template}>
               Education
             </PdfSectionTitle>
 
@@ -485,7 +497,7 @@ function ResumePdfDocument({
 
         {resume.projects?.length > 0 && (
           <View style={pdfStyles.section}>
-            <PdfSectionTitle>
+            <PdfSectionTitle variant={template}>
               Projects
             </PdfSectionTitle>
 
@@ -563,7 +575,7 @@ function ResumePdfDocument({
 
         {resume.certifications?.length > 0 && (
           <View style={pdfStyles.section}>
-            <PdfSectionTitle>
+            <PdfSectionTitle variant={template}>
               Certifications
             </PdfSectionTitle>
 
@@ -615,7 +627,7 @@ function ResumePdfDocument({
 
         {resume.languages?.length > 0 && (
           <View style={pdfStyles.section}>
-            <PdfSectionTitle>
+            <PdfSectionTitle variant={template}>
               Languages
             </PdfSectionTitle>
 
@@ -646,7 +658,7 @@ function ResumePdfDocument({
         {resume.skills?.categories?.length >
           0 && (
           <View style={pdfStyles.section} wrap>
-            <PdfSectionTitle>
+            <PdfSectionTitle variant={template}>
               Skills
             </PdfSectionTitle>
 
@@ -700,7 +712,7 @@ function ResumePdfDocument({
                 key={`custom-${index}`}
                 style={pdfStyles.section}
               >
-                <PdfSectionTitle>
+                <PdfSectionTitle variant={template}>
                   {customSection.title}
                 </PdfSectionTitle>
 

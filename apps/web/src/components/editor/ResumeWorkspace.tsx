@@ -10,6 +10,7 @@ import { ResumeOverview } from "@/components/resume/ResumeOverview";
 import { SectionOrderEditor } from "@/components/resume/SectionOrderEditor";
 import { ExportActions } from "@/components/editor/ExportActions";
 import { ResumeHistory } from "@/components/editor/ResumeHistory";
+import { TemplateSelector } from "@/components/templates/TemplateSelector";
 import { useEditor } from "@/lib/editor/EditorProvider";
 import { ResumePrint } from "@/components/resume/ResumePrint";
 
@@ -88,7 +89,7 @@ const sections: SectionDefinition[] = [
 ];
 
 export function ResumeWorkspace() {
-  const { state } = useEditor();
+  const { state, dispatch } = useEditor();
 
   const [activeSection, setActiveSection] =
     useState<EditorSection>("profile");
@@ -458,6 +459,19 @@ export function ResumeWorkspace() {
                   Changes appear here instantly
                   as you edit.
                 </p>
+              </div>
+
+              <div style={{ padding: "0 18px 14px" }}>
+                <TemplateSelector
+                  value={state.resume.design?.template ?? "modern"}
+                  onChange={(templateId) => dispatch({
+                    type: "resume/update",
+                    updater: (resume) => ({
+                      ...resume,
+                      design: { ...resume.design, template: templateId },
+                    }),
+                  })}
+                />
               </div>
 
               <div

@@ -2781,3 +2781,88 @@ body,
   break-after: avoid !important;
   page-break-after: avoid !important;
 }
+
+/* ResumeForge professional document variants.
+   Each keeps a linear, single-column ATS reading order. */
+.rf-template-classic,
+.rf-template-minimal,
+.rf-template-executive {
+  color: #24312d;
+  background: #fff;
+}
+.rf-template-classic { font-family: Georgia, "Times New Roman", serif; }
+.rf-template-classic .rf-preview-name {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.rf-template-classic .rf-preview-section h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  text-transform: none;
+  font-variant: small-caps;
+  letter-spacing: 0.025em;
+  border-bottom: 1px solid #888;
+  padding-bottom: 5px;
+}
+.rf-template-minimal { font-family: Arial, Helvetica, sans-serif; }
+.rf-template-minimal .rf-preview-name {
+  font-size: 25px;
+  font-weight: 600;
+  letter-spacing: -0.055em;
+}
+.rf-template-minimal .rf-preview-section {
+  margin-top: 12px;
+}
+.rf-template-minimal .rf-preview-section h3 {
+  border: 0;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .11em;
+}
+.rf-template-executive { font-family: "Times New Roman", Georgia, serif; }
+.rf-template-executive > header {
+  border-bottom: 2px solid #24312d;
+  padding-bottom: 14px;
+  margin-bottom: 10px;
+}
+.rf-template-executive .rf-preview-name {
+  font-family: "Times New Roman", Georgia, serif;
+  font-weight: 700;
+  font-size: 29px;
+  text-transform: uppercase;
+  letter-spacing: .035em;
+}
+.rf-template-executive .rf-preview-section h3 {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  border-bottom: 1px solid #24312d;
+  padding-bottom: 5px;
+}
+.rf-template-selector {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 13px;
+  color: #344054;
+  font-weight: 700;
+}
+.rf-template-selector select {
+  flex: 1;
+  min-width: 130px;
+  padding: 8px 10px;
+  border: 1px solid #cbd5d1;
+  border-radius: 7px;
+  background: #fff;
+  color: #344054;
+}
+@media print {
+  .rf-template-classic, .rf-template-minimal, .rf-template-executive {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
