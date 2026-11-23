@@ -13,7 +13,7 @@ services:
       RESUMEFORGE_DATA_DIR: /app/data
 
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
 
     volumes:
       - resumeforge_data:/app/data
