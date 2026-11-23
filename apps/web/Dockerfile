@@ -72,6 +72,14 @@ COPY --from=deps /app/packages/resume-schema \
 # Copy application source only after dependencies are available.
 COPY apps/web ./apps/web
 
+# A local file: dependency may not survive cross-stage COPY as a resolvable
+# runtime package. Materialize the already-built schema as an actual package
+# under web/node_modules before Next.js/Turbopack resolves its JS exports.
+RUN mkdir -p /app/apps/web/node_modules/@resumeforge \
+    && rm -rf /app/apps/web/node_modules/@resumeforge/resume-schema \
+    && cp -a /app/packages/resume-schema /app/apps/web/node_modules/@resumeforge/resume-schema \
+    && test -f /app/apps/web/node_modules/@resumeforge/resume-schema/dist/index.js
+
 WORKDIR /app/apps/web
 
 ENV NODE_ENV=production \
