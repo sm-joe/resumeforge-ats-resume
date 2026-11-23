@@ -40,7 +40,7 @@ The project is organized as a monorepo so the web editor, API, resume schema, an
 | Persistence | SQLite + SQLAlchemy |
 | Analysis | ATS-oriented resume analyzer |
 | Matching | Resume-to-job matching |
-| Export | Microsoft Word |
+| Export | PDF and Microsoft Word |
 | Containers | Docker |
 | Orchestration | Docker Compose |
 | CI/CD | GitHub Actions |
@@ -358,7 +358,7 @@ ResumeForge supports Microsoft Word export through the API.
 | Format | Support |
 |---|---|
 | `.docx` | Supported |
-| PDF | Application export workflow can be extended independently |
+| PDF | Supported (client-side, selectable A4/Letter) |
 
 The export layer operates from the structured resume model rather than editor-specific UI state.
 
@@ -422,54 +422,26 @@ The manual **Release Security & Docker Validation** GitHub Actions workflow buil
 
 This workflow intentionally does **not** run for ordinary pull requests or pushes. Before any stable release, manually trigger both this workflow and CodeQL and verify all checks are green.
 
-## CI/CD
+## CI/CD And Release Validation
 
-ResumeForge uses a sequential GitHub Actions pipeline.
+Normal PRs and pushes to `main` run **fast CI**: changed-path detection, Next.js + schema builds, schema Vitest tests, and Python API/analyzer tests. Security scanning and Docker builds are intentionally **not** run on ordinary PRs or pushes.
 
-| Stage | Check | Purpose |
-|---|---|---|
-| 1 | `CI Run` | Build applications and run tests |
-| 2 | `Security Scan` | Secret, code, and dependency security checks |
-| 3 | `Docker Build` | Build and scan container images |
-| 4 | GHCR Push | Publish images from `main` |
+The manual **Release Security & Docker Validation** workflow, or a push to the dedicated `release/v1.0.0-candidate` branch, performs the heavier release audit: CodeQL, Gitleaks, npm/pip audits, Kubernetes Kustomize rendering, Docker image builds, Trivy vulnerability scanning, Playwright acceptance tests and SPDX SBOM generation.
 
-Pipeline flow:
+For publication, manually dispatch this workflow against `main` with `publish=true` and `release_tag=v1.0.0`. Publication is gated on all preceding checks succeeding. The **exact scanned images** are tagged and pushed to GHCR, signed with keyless Sigstore/Cosign, and attached to a stable GitHub Release along with SBOMs and image digest evidence.
 
-```text
-CI Run
-   ↓
-Security Scan
-   ↓
-Docker Build
-   ↓
-GHCR
-```
-
-### CI checks
-
-| Tool | Purpose |
-|---|---|
-| Gitleaks | Secret detection |
-| Semgrep | Static analysis |
-| npm audit | JavaScript dependency vulnerabilities |
-| pip-audit | Python dependency vulnerabilities |
-| Trivy | Container vulnerabilities |
-
-Container scanning checks `HIGH` and `CRITICAL` vulnerabilities while ignoring unfixed findings.
+The release workflow rejects a duplicate immutable `v1.0.0` tag. No public images are published by ordinary development CI.
 
 ## Container Registry
 
-Successful builds from `main` publish:
+After a successful stable publication, the versioned images are:
 
 ```text
-ghcr.io/<owner>/resumeforge-api:<git-sha>
-ghcr.io/<owner>/resumeforge-api:latest
-
-ghcr.io/<owner>/resumeforge-web:<git-sha>
-ghcr.io/<owner>/resumeforge-web:latest
+ghcr.io/sm-joe/resumeforge-api:v1.0.0
+ghcr.io/sm-joe/resumeforge-web:v1.0.0
 ```
 
-The Git commit SHA provides an immutable image reference while `latest` provides a convenient current tag.
+A commit-SHA image tag is also published for each release. Prefer an immutable image digest for production deployments.
 
 ## Security
 
@@ -496,12 +468,10 @@ The repository is configured around a pull-request based workflow.
 | Control | Configuration |
 |---|---|
 | Default branch | `main` |
-| Direct pushes to `main` | Blocked |
-| Force pushes | Blocked |
-| Branch deletion | Restricted |
-| Pull request | Required |
-| Required CI checks | `CI Run`, `Security Scan`, `Docker Build` |
-| Conversation resolution | Required |
+| Branch protection | Temporarily disabled during final product development |
+| Merge workflow | Pull requests and passing fast CI recommended |
+| Development checks | `CI Run` and `Pipeline Status` |
+| Release security checks | Manual or dedicated release-candidate branch only |
 | Dependency updates | Dependabot |
 | Ownership | CODEOWNERS |
 | Issue intake | GitHub issue templates |
@@ -514,19 +484,17 @@ Feature Branch
       ↓
 Local Development
       ↓
-Local Validation
-      ↓
 Pull Request
       ↓
-CI Run
+Fast CI: Build + Tests
       ↓
-Security Scan
+Review and Merge to main
+
+Release Candidate
       ↓
-Docker Build
+Security + Docker + Browser Acceptance
       ↓
-Review
-      ↓
-Merge to main
+Signed GHCR Images + Stable Release
 ```
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for contribution guidelines.
