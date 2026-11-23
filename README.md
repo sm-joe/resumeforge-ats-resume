@@ -383,6 +383,12 @@ docker build   -f apps/web/Dockerfile   -t resumeforge-web:local   .
 
 The application containers use multi-stage builds and non-root runtime users.
 
+## Operations And Data Durability
+
+The Kubernetes API requires a persistent volume and mounts `/app/data`; the sample configuration is intended for a single SQLite writer. The self-hosted Docker Compose deployment stores database content in the `resumeforge_data` named volume.
+
+For safe backups, restoration, upgrades, network exposure and Kubernetes installation, see **[Operations Guide](docs/operations.md)**. A browser-held ownership key is not restored automatically from a database backup.
+
 ## Docker Compose
 
 | Configuration | Location | Purpose |
