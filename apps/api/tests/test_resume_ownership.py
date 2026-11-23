@@ -75,3 +75,22 @@ def test_invalid_key_is_rejected():
     with pytest.raises(HTTPException) as error:
         routes.create_resume(resume(), owner_key="guessable")
     assert error.value.status_code == 401
+
+
+def test_design_fields_survive_api_round_trip():
+    value = resume("styled-001")
+    value.design.template = "modern"
+    value.design.pageSize = "LETTER"
+    value.design.accentColor = "#123456"
+    routes.create_resume(value, owner_key=OWNER_A)
+    loaded = routes.get_resume("styled-001", owner_key=OWNER_A)
+    assert loaded.design.pageSize == "LETTER"
+    assert loaded.design.accentColor == "#123456"
+
+
+def test_legacy_resume_without_design_receives_defaults():
+    payload = resume("legacy-001").model_dump()
+    payload.pop("design", None)
+    loaded = Resume.model_validate(payload)
+    assert loaded.design.template == "modern"
+    assert loaded.design.pageSize == "A4"
