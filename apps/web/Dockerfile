@@ -129,10 +129,9 @@ COPY --from=builder --chown=nextjs:nextjs \
     /app/apps/web/.next/static \
     ./.next/static
 
-# Public assets.
-COPY --from=builder --chown=nextjs:nextjs \
-    /app/apps/web/public \
-    ./public
+# No public/ directory is required: Next.js bundles the application icon and
+# other assets through the App Router. Do not COPY a directory absent from
+# the cleaned repository, or release container builds will fail.
 
 USER nextjs
 
