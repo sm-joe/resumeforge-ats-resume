@@ -293,6 +293,23 @@ FastAPI interactive documentation is available at:
 http://localhost:8000/docs
 ```
 
+## Resume Quality Score Methodology
+
+ResumeForge reports a **deterministic Resume Quality Score (0–100)** based on documented content checks. It is **not** a probability of passing any particular applicant-tracking system. The current rule weights are:
+
+| Category | Maximum Points |
+|---|---:|
+| Contact and profile | 15 |
+| Professional summary | 10 |
+| Work experience | 25 |
+| Skills | 20 |
+| Education | 10 |
+| Certifications | 5 |
+| Resume structure | 15 |
+| **Total** | **100** |
+
+The checks consider section completeness, visible text length, identified skills, experience details, quantification and section presence. Rich-text HTML tags are removed before scoring. Suggestions help users improve readability; they do not guarantee interview selection. The **Job Match** feature is separate from this completeness score and should be used to evaluate evidence against a specific description.
+
 ## ATS Analysis
 
 ResumeForge includes an analyzer designed around structured resume information.
