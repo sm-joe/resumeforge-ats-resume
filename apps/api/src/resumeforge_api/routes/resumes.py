@@ -8,7 +8,7 @@ import re
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Header, HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from resumeforge_api.db import ResumeRecord, SessionLocal
 from resumeforge_api.models import Resume
@@ -30,6 +30,12 @@ def _private_record(session, resume_id: str, owner_hash: str) -> ResumeRecord:
     return record
 
 
+def _resume_from_record(record: ResumeRecord) -> Resume:
+    resume = Resume.model_validate(record.resume_json)
+    resume.metadata.revision = record.revision
+    return resume
+
+
 @router.get("", response_model=list[Resume])
 def list_resumes(
     owner_key: str = Header(default="", alias="X-Resume-Key"),
@@ -41,7 +47,7 @@ def list_resumes(
             .where(ResumeRecord.owner_key_hash == owner)
             .order_by(ResumeRecord.updated_at.desc())
         ).all()
-        return [Resume.model_validate(record.resume_json) for record in records]
+        return [_resume_from_record(record) for record in records]
 
 
 @router.post("", response_model=Resume, status_code=201)
@@ -53,12 +59,14 @@ def create_resume(
         raise HTTPException(status_code=403, detail="Demo resume is read-only")
     owner = _owner_hash(owner_key)
     now = datetime.now(timezone.utc)
+    resume.metadata.revision = 1
     with SessionLocal() as session:
         if session.get(ResumeRecord, resume.metadata.id) is not None:
             raise HTTPException(status_code=409, detail="Resume already exists")
         session.add(ResumeRecord(
             id=resume.metadata.id,
             owner_key_hash=owner,
+            revision=1,
             title=resume.metadata.title,
             schema_version=resume.schemaVersion,
             resume_json=resume.model_dump(),
@@ -76,7 +84,7 @@ def get_resume(
 ) -> Resume:
     owner = _owner_hash(owner_key)
     with SessionLocal() as session:
-        return Resume.model_validate(_private_record(session, resume_id, owner).resume_json)
+        return _resume_from_record(_private_record(session, resume_id, owner))
 
 
 @router.put("/{resume_id}", response_model=Resume)
@@ -92,10 +100,32 @@ def update_resume(
     owner = _owner_hash(owner_key)
     with SessionLocal() as session:
         record = _private_record(session, resume_id, owner)
-        record.title = resume.metadata.title
-        record.schema_version = resume.schemaVersion
-        record.resume_json = resume.model_dump()
-        record.updated_at = datetime.now(timezone.utc)
+        expected = resume.metadata.revision
+        if expected is None:
+            raise HTTPException(status_code=428, detail="Resume revision required")
+        if expected != record.revision:
+            raise HTTPException(status_code=409, detail="Resume changed in another session")
+        # Atomic conditional update: only one writer can advance a revision.
+        next_revision = expected + 1
+        resume.metadata.revision = next_revision
+        result = session.execute(
+            update(ResumeRecord)
+            .where(
+                ResumeRecord.id == resume_id,
+                ResumeRecord.owner_key_hash == owner,
+                ResumeRecord.revision == expected,
+            )
+            .values(
+                title=resume.metadata.title,
+                schema_version=resume.schemaVersion,
+                resume_json=resume.model_dump(),
+                revision=next_revision,
+                updated_at=datetime.now(timezone.utc),
+            )
+        )
+        if result.rowcount != 1:
+            session.rollback()
+            raise HTTPException(status_code=409, detail="Resume changed in another session")
         session.commit()
     return resume
 

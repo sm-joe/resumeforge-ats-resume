@@ -133,6 +133,7 @@ class ResumeMetadata(BaseModel):
     id: str
     title: str
     updatedAt: str
+    revision: int | None = None
 
 
 class ResumeDesign(BaseModel):

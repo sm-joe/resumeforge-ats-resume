@@ -17,6 +17,27 @@ function browserOwnerKey(): string {
   return key;
 }
 
+// Session-scoped revisions deliberately do not synchronize across browser tabs.
+// Each editor must prove it is updating the version it last observed.
+const revisionKey = (id: string) => `resumeforge:revision:${id}`;
+
+export function trackResumeRevision(resume: Resume): void {
+  if (typeof window !== "undefined" && resume.metadata.revision) {
+    sessionStorage.setItem(revisionKey(resume.metadata.id), String(resume.metadata.revision));
+  }
+}
+
+function resumeWithExpectedRevision(resume: Resume): Resume {
+  const stored = typeof window !== "undefined"
+    ? sessionStorage.getItem(revisionKey(resume.metadata.id))
+    : null;
+  const revision = stored ? Number(stored) : resume.metadata.revision;
+  return {
+    ...resume,
+    metadata: { ...resume.metadata, ...(revision ? { revision } : {}) },
+  };
+}
+
 export async function apiFetch(
   path: string,
   init?: RequestInit,
@@ -80,7 +101,9 @@ export async function getResume(
     );
   }
 
-  return response.json() as Promise<Resume>;
+  const loaded = await response.json() as Resume;
+  trackResumeRevision(loaded);
+  return loaded;
 }
 
 export async function createResume(
@@ -103,7 +126,9 @@ export async function createResume(
     );
   }
 
-  return response.json() as Promise<Resume>;
+  const created = await response.json() as Resume;
+  trackResumeRevision(created);
+  return created;
 }
 
 export async function updateResume(
@@ -117,17 +142,20 @@ export async function updateResume(
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(resume),
+      body: JSON.stringify(resumeWithExpectedRevision(resume)),
     },
   );
 
   if (!response.ok) {
-    throw new Error(
-      `Failed to update resume: ${response.status}`,
-    );
+    if (response.status === 409 || response.status === 428) {
+      throw new Error("Save conflict: this resume has changed in another tab. Reopen it before retrying to avoid losing work.");
+    }
+    throw new Error(`Failed to update resume: ${response.status}`);
   }
 
-  return response.json() as Promise<Resume>;
+  const updated = await response.json() as Resume;
+  trackResumeRevision(updated);
+  return updated;
 }
 
 export async function deleteResume(
@@ -151,25 +179,13 @@ export async function deleteResume(
  * Save an existing resume or create a new record for a first-time draft.
  * Other errors are propagated rather than silently creating duplicates.
  */
-export async function saveResume(
-  resume: Resume,
-): Promise<Resume> {
-  const response = await apiFetch(
-    `/api/v1/resumes/${encodeURIComponent(resume.metadata.id)}`,
-    {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(resume),
-    },
-  );
-
-  if (response.status === 404) {
-    return createResume(resume);
+export async function saveResume(resume: Resume): Promise<Resume> {
+  try {
+    return await updateResume(resume.metadata.id, resume);
+  } catch (error) {
+    if (error instanceof Error && error.message === "Failed to update resume: 404") {
+      return createResume(resume);
+    }
+    throw error;
   }
-
-  if (!response.ok) {
-    throw new Error(`Failed to save resume: ${response.status}`);
-  }
-
-  return response.json() as Promise<Resume>;
 }
