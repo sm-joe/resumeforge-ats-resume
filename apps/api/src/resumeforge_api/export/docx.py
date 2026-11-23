@@ -163,17 +163,23 @@ def resume_to_docx(
     section.left_margin = Inches(0.65)
     section.right_margin = Inches(0.65)
 
+    template = resume.design.template if resume.design.template in {
+        "modern", "classic", "minimal", "executive"
+    } else "modern"
+    serif = template in {"classic", "executive"}
+    font_name = "Times New Roman" if serif else "Arial"
+
     normal = document.styles["Normal"]
-    normal.font.name = "Arial"
-    normal.font.size = Pt(10)
+    normal.font.name = font_name
+    normal.font.size = Pt(9 if template == "minimal" else 10)
 
     title = document.add_paragraph()
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     run = title.add_run(resume.profile.name or "Your Name")
     run.bold = True
-    run.font.name = "Arial"
-    run.font.size = Pt(20)
+    run.font.name = font_name
+    run.font.size = Pt(18 if template == "minimal" else 22 if template == "executive" else 20)
 
     if resume.profile.headline:
         paragraph = document.add_paragraph()
@@ -218,9 +224,13 @@ def resume_to_docx(
         paragraph.paragraph_format.space_before = Pt(8)
         paragraph.paragraph_format.space_after = Pt(3)
 
-        run = paragraph.add_run(text.upper())
+        heading = text.title() if template == "classic" else text.upper()
+        run = paragraph.add_run(heading)
         run.bold = True
-        run.font.size = Pt(11)
+        run.font.name = font_name
+        run.font.size = Pt(10 if template == "minimal" else 11)
+        if template in {"classic", "executive"}:
+            paragraph.paragraph_format.space_before = Pt(10)
 
     if resume.summary.strip():
         add_heading("Professional Summary")
