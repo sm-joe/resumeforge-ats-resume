@@ -156,3 +156,19 @@ def test_scoring_is_deterministic():
     second = analyze_resume(resume)
 
     assert first == second
+
+def test_rich_text_markup_does_not_change_quality_score():
+    plain = make_resume()
+    rich = make_resume(summary=f"<p><strong>{plain.summary}</strong></p>")
+    rich.experience[0].bullets = [
+        "<p><strong>Designed</strong> cloud infrastructure serving 2M users.</p>",
+        "Reduced deployment time by 40%.",
+        "Automated infrastructure provisioning.",
+    ]
+    result_plain = analyze_resume(plain)
+    result_rich = analyze_resume(rich)
+    assert result_plain.overall_score == result_rich.overall_score
+    assert not any(
+        finding.id == "experience-weak-action-verbs"
+        for finding in result_rich.findings
+    )

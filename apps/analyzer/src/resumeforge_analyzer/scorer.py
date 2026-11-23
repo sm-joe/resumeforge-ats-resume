@@ -1,3 +1,5 @@
+import html
+import re
 from typing import Any
 
 from .models import AnalysisResult, CategoryScore, Finding
@@ -41,7 +43,10 @@ def _text(value: Any) -> str:
     if value is None:
         return ""
 
-    return str(value).strip()
+    # Resume editor stores rich-text HTML; score visible text, not markup.
+    raw = str(value)
+    plain = re.sub(r"<[^>]*>", " ", raw)
+    return re.sub(r"\\s+", " ", html.unescape(plain)).strip()
 
 
 def _finding(

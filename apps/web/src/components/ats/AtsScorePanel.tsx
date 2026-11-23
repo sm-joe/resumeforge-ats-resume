@@ -106,12 +106,10 @@ export function AtsScorePanel() {
           Resume Quality
         </p>
 
-        <h2>ATS Analysis</h2>
+        <h2>Resume Quality Analysis</h2>
 
         <p>
-          Check your resume structure and
-          content against deterministic ATS
-          rules.
+          Check resume completeness, clarity and structure against transparent, deterministic rules.
         </p>
       </div>
 
@@ -162,6 +160,12 @@ export function AtsScorePanel() {
         )}
 
         {result && (
+          <p style={{ padding: "8px 10px", color: "#475467", fontSize: 12, lineHeight: 1.5 }}>
+            This is an explainable ResumeForge quality score, not an estimate of acceptance by an employer&apos;s ATS.
+          </p>
+        )}
+
+        {result && (
           <div
             style={{
               marginTop: "14px",
@@ -192,7 +196,7 @@ export function AtsScorePanel() {
                     marginBottom: "3px",
                   }}
                 >
-                  ATS Score
+                  Resume Quality Score
                 </div>
 
                 <strong
