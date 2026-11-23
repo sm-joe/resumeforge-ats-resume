@@ -4,6 +4,7 @@ export interface EditorState {
   resume: Resume;
   isDirty: boolean;
   lastSavedAt: string | null;
+  saveError: string | null;
 }
 
 export type ResumeAction =
@@ -154,6 +155,10 @@ export type ResumeAction =
   | {
       type: "editor/mark-saved";
       savedAt: string;
+    }
+  | {
+      type: "editor/save-error";
+      message: string;
     }
   | {
       type: "editor/reset";
