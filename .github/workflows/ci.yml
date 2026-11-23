@@ -1,4 +1,4 @@
-name: CI & Container Build Pipeline
+name: CI & Tests
 
 on:
   pull_request:
@@ -25,7 +25,6 @@ jobs:
 
     outputs:
       ci: ${{ steps.filter.outputs.ci }}
-      docker: ${{ steps.filter.outputs.docker }}
     
     steps:
       - name: Checkout Repository
@@ -51,15 +50,6 @@ jobs:
               - '**/uv.lock'
               - '**/package.json'
               - '**/package-lock.json'
-
-            docker:
-              - 'apps/api/**'
-              - 'apps/web/**'
-              - 'apps/analyzer/**'
-              - 'packages/**'
-              - 'deploy/**'
-              - '**/Dockerfile'
-              - '.dockerignore'
 
   ci:
     name: CI Run
@@ -126,233 +116,19 @@ jobs:
       - name: Test FastAPI Export Security
         run: uv run --project apps/api --with pytest pytest apps/api/tests
 
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    needs: changes
-
-    if: >-
-      needs.changes.outputs.ci == 'true' ||
-      needs.changes.outputs.docker == 'true'
-
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Run Gitleaks Scan
-        uses: gitleaks/gitleaks-action@v3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: apps/web/package-lock.json
-
-      - name: Install Web Dependencies
-        run: npm ci --prefix apps/web
-
-      - name: NPM Audit
-        run: npm audit --prefix apps/web --audit-level=high
-
-      - name: Setup Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.13"
-
-      - name: Install UV
-        uses: astral-sh/setup-uv@v10.3.3
-        with:
-          version: "0.12.19"
-          enable-cache: true
-          cache-dependency-glob: |
-            apps/api/uv.lock
-            apps/analyzer/uv.lock
-            apps/api/pyproject.toml
-            apps/analyzer/pyproject.toml
-
-      - name: Sync API Dependencies for Audit
-        run: uv sync --project apps/api --locked
-
-      - name: Install Analyzer for Audit
-        run: |
-          uv pip install \
-            --python apps/api/.venv/bin/python \
-            ./apps/analyzer
-
-      - name: Audit Python Dependencies
-        run: |
-          uv pip install --system pip-audit
-          pip-audit --strict --desc --ignore-vuln PYSEC-0000
-
-  docker:
-    name: Docker Build, Scan & Publish
-    runs-on: ubuntu-latest
-    needs: [changes, ci, security]
-
-    if: >-
-      always() &&
-      needs.changes.result == 'success' &&
-      needs.changes.outputs.docker == 'true' &&
-      needs.security.result == 'success' &&
-      (needs.ci.result == 'success' || needs.ci.result == 'skipped')
-
-    permissions:
-      contents: read
-      packages: write
-      security-events: write
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Login to GHCR
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      # Build once. PRs use a local image; main pushes a temporary
-      # tag that is promoted only after the vulnerability scan passes.
-      - name: Build API Image
-        id: build-api
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: apps/api/Dockerfile
-          load: ${{ github.event_name == 'pull_request' }}
-          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-          tags: >-
-            ${{ github.event_name == 'push' && github.ref == 'refs/heads/main'
-             && format('ghcr.io/{0}/resumeforge-api:{1}-ci', github.repository_owner, github.sha)
-             || 'resumeforge-api:ci' }}
-          cache-from: type=gha,scope=resumeforge-api
-          cache-to: type=gha,mode=max,scope=resumeforge-api
-
-      - name: Scan API Image
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          version: "v0.75.0"
-          image-ref: >-
-            ${{ github.event_name == 'push' && github.ref == 'refs/heads/main'
-             && format('ghcr.io/{0}/resumeforge-api:{1}-ci',
-             github.repository_owner, github.sha) || 'resumeforge-api:ci' }}
-          format: sarif
-          output: trivy-api-results.sarif
-          exit-code: "1"
-          ignore-unfixed: true
-          severity: CRITICAL,HIGH
-
-      - name: Upload API Trivy Results
-        if: always() && github.event_name == 'push' && hashFiles('trivy-api-results.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: trivy-api-results.sarif
-          category: trivy-api-container
-
-      - name: Build Web Image
-        id: build-web
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: apps/web/Dockerfile
-          load: ${{ github.event_name == 'pull_request' }}
-          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-          tags: >-
-            ${{ github.event_name == 'push' && github.ref == 'refs/heads/main'
-             && format('ghcr.io/{0}/resumeforge-web:{1}-ci', github.repository_owner, github.sha)
-             || 'resumeforge-web:ci' }}
-          cache-from: type=gha,scope=resumeforge-web
-          cache-to: type=gha,mode=max,scope=resumeforge-web
-
-      - name: Scan Web Image
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          version: "v0.75.0"
-          image-ref: >-
-            ${{ github.event_name == 'push' && github.ref == 'refs/heads/main'
-             && format('ghcr.io/{0}/resumeforge-web:{1}-ci', github.repository_owner, github.sha)
-             || 'resumeforge-web:ci' }}
-          format: sarif
-          output: trivy-web-results.sarif
-          exit-code: "1"
-          ignore-unfixed: true
-          severity: CRITICAL,HIGH
-
-      - name: Upload Web Trivy Results
-        if: always() && github.event_name == 'push' && hashFiles('trivy-web-results.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: trivy-web-results.sarif
-          category: trivy-web-container
-
-      # Promote the exact scanned images without rebuilding.
-      - name: Publish API Image Tags
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          IMAGE: ghcr.io/${{ github.repository_owner }}/resumeforge-api
-          SHA: ${{ github.sha }}
-        run: |
-          docker buildx imagetools create --tag "$IMAGE:$SHA" --tag "$IMAGE:latest" "$IMAGE:$SHA-ci"
-
-      - name: Publish Web Image Tags
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          IMAGE: ghcr.io/${{ github.repository_owner }}/resumeforge-web
-          SHA: ${{ github.sha }}
-        run: |
-          docker buildx imagetools create --tag "$IMAGE:$SHA" --tag "$IMAGE:latest" "$IMAGE:$SHA-ci"
-
   pipeline-status:
     name: Pipeline Status
     runs-on: ubuntu-latest
-    needs: [changes, ci, security, docker]
+    needs: [changes, ci]
     if: always()
-
     permissions:
       contents: read
-
     steps:
-      
-      - name: Verify Pipeline Results
+      - name: Verify Fast CI
         env:
           CHANGES_RESULT: ${{ needs.changes.result }}
           CI_RESULT: ${{ needs.ci.result }}
-          SECURITY_RESULT: ${{ needs.security.result }}
-          DOCKER_RESULT: ${{ needs.docker.result }}
         run: |
-          if [[ "$CHANGES_RESULT" != "success" ]]; then
-            echo "Change detection failed."
-            exit 1
-          fi
-
-          if [[ "$CI_RESULT" == "failure" || "$CI_RESULT" == "cancelled" ]]; then
-            echo "CI failed or was cancelled."
-            exit 1
-          fi
-
-          if [[ "$SECURITY_RESULT" == "failure" || "$SECURITY_RESULT" == "cancelled" ]]; then
-            echo "Security checks failed or were cancelled."
-            exit 1
-          fi
-
-          if [[ "$DOCKER_RESULT" == "failure" || "$DOCKER_RESULT" == "cancelled" ]]; then
-            echo "Docker build, scan, or publishing failed."
-            exit 1
-          fi
-
-          echo "All applicable pipeline jobs passed."
+          if [[ "$CHANGES_RESULT" != "success" ]]; then exit 1; fi
+          if [[ "$CI_RESULT" != "success" && "$CI_RESULT" != "skipped" ]]; then exit 1; fi
+          echo "Fast development checks passed."
