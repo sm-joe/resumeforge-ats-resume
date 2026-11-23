@@ -707,7 +707,14 @@ export function editorReducer(
       return {
         ...state,
         isDirty: false,
+        saveError: null,
         lastSavedAt: action.savedAt,
+      };
+
+    case "editor/save-error":
+      return {
+        ...state,
+        saveError: action.message,
       };
 
     case "editor/reset":
@@ -715,6 +722,7 @@ export function editorReducer(
         resume: action.resume,
         isDirty: false,
         lastSavedAt: null,
+        saveError: null,
       };
 
     default: {
