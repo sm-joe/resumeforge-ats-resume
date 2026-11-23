@@ -219,6 +219,16 @@ uv sync --directory apps/api
 uv run --directory apps/api uvicorn resumeforge_api.main:app --reload --port 8000
 ```
 
+## Resume Privacy And Ownership (M1 Development)
+
+ResumeForge currently uses a **browser-held, random 256-bit capability key** to isolate private resume records. The browser stores the key in local storage and sends it through the Next.js same-origin resume proxy. The API stores only a SHA-256 hash of this key and restricts listing, reading, editing and deleting to matching records. The shared demo resume remains read-only.
+
+This is **single-browser self-hosting isolation**, not a replacement for accounts, login, secure multi-user identity, or permission management. Anyone who obtains the browser's ownership key can access its resumes. Do not use this development design as a multi-tenant hosted service.
+
+**Important migration behavior:** Existing resume records without an ownership key remain in SQLite but are inaccessible via the protected CRUD API. Previously saved browser drafts are preserved locally and automatically copied to a new private resume ID. Back up `/app/data/resumeforge.db` and the browser's local data before clearing browser storage or upgrading. Losing the ownership key means losing API access to those private records unless a separately designed secure recovery flow is implemented.
+
+The Compose configuration binds the API debug port to `127.0.0.1:8000` rather than exposing it on all host interfaces. The web application proxies private resume CRUD through `/api/resumes`.
+
 ## Resume Persistence
 
 ResumeForge uses two persistence layers.
