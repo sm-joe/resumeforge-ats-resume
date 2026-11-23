@@ -52,3 +52,36 @@ def test_word_export_hides_internal_errors(monkeypatch):
         export_route.export_word(sample_resume())
     assert caught.value.status_code == 500
     assert caught.value.detail == "Word export failed"
+
+
+@pytest.mark.parametrize(
+    ("paper", "width", "height"),
+    [("A4", 8.27, 11.69), ("LETTER", 8.5, 11.0)],
+)
+def test_word_export_preserves_paper_format(paper, width, height):
+    resume = sample_resume()
+    resume.design.pageSize = paper
+    response = export_route.export_word(resume)
+    document = Document(BytesIO(response.body))
+    section = document.sections[0]
+    assert section.page_width.inches == pytest.approx(width, abs=0.02)
+    assert section.page_height.inches == pytest.approx(height, abs=0.02)
+
+
+def test_word_export_includes_custom_section_items():
+    resume = sample_resume()
+    payload = resume.model_dump()
+    payload["customSections"] = [
+        {
+            "id": "speaking",
+            "title": "Conference Talks",
+            "items": ["<strong>Cloud Architecture</strong> — DevConf 2026", "Platform Reliability"],
+        }
+    ]
+    resume = Resume.model_validate(payload)
+    response = export_route.export_word(resume)
+    document = Document(BytesIO(response.body))
+    text = "\n".join(paragraph.text for paragraph in document.paragraphs)
+    assert "CONFERENCE TALKS" in text
+    assert "Cloud Architecture" in text
+    assert "Platform Reliability" in text

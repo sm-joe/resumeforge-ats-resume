@@ -252,7 +252,7 @@ function ResumePdfDocument({
       author="ResumeForge"
     >
       <Page
-        size="A4"
+        size={resume.design?.pageSize === "LETTER" ? "LETTER" : "A4"}
         style={pdfStyles.page}
         wrap
       >
