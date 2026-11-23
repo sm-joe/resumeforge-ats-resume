@@ -1,4 +1,19 @@
-from pydantic import BaseModel, ConfigDict
+from urllib.parse import urlsplit
+
+from pydantic import BaseModel, ConfigDict, field_validator
+
+
+def _safe_public_url(value: str) -> str:
+    if not value:
+        return value
+    if any(ord(character) < 32 for character in value):
+        raise ValueError("URL contains invalid control characters")
+    parsed = urlsplit(value)
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname:
+        raise ValueError("Only absolute HTTP or HTTPS links are accepted")
+    if parsed.username is not None or parsed.password is not None:
+        raise ValueError("Embedded URL credentials are not permitted")
+    return value
 
 
 class Link(BaseModel):
@@ -6,6 +21,13 @@ class Link(BaseModel):
 
     label: str
     url: str
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, value: str) -> str:
+        if not value:
+            raise ValueError("Link URL is required")
+        return _safe_public_url(value)
 
 
 class Profile(BaseModel):
@@ -52,6 +74,11 @@ class Project(BaseModel):
     description: str | None = None
     url: str | None = None
     technologies: list[str] = []
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, value: str | None) -> str | None:
+        return _safe_public_url(value) if value is not None else None
     bullets: list[str] = []
 
 
@@ -77,6 +104,11 @@ class Certification(BaseModel):
     issuer: str | None = None
     date: str | None = None
     url: str | None = None
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, value: str | None) -> str | None:
+        return _safe_public_url(value) if value is not None else None
 
 
 class Language(BaseModel):
