@@ -75,6 +75,21 @@ export function EditorProvider({
       console.error("Failed to restore ResumeForge draft:", error);
     }
 
+    // Previously saved, unowned server records cannot be claimed securely.
+    // Preserve their browser content under a fresh private ID on migration.
+    const needsOwnershipMigration =
+      !window.localStorage.getItem("resumeforge:owner-key");
+    if (needsOwnershipMigration && restored.metadata.id !== "demo-resume-001") {
+      restored = {
+        ...restored,
+        metadata: {
+          ...restored.metadata,
+          id: crypto.randomUUID(),
+          updatedAt: new Date().toISOString(),
+        },
+      };
+    }
+
     if (restored.metadata.id === "demo-resume-001") {
       restored = {
         ...restored,
