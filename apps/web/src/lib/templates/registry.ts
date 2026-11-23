@@ -1,3 +1,4 @@
+import { createElement } from "react";
 import type { ResumeTemplateDefinition } from "./types";
 
 import { ModernResume } from "@/components/templates/modern/ModernResume";
@@ -5,13 +6,13 @@ import { ResumeOverview } from "@/components/resume/ResumeOverview";
 import type { ResumeTemplateProps } from "./types";
 
 function ClassicResume({ resume }: ResumeTemplateProps) {
-  return <ResumeOverview resume={{ ...resume, design: { ...resume.design, template: "classic" } }} />;
+  return createElement(ResumeOverview, { resume: { ...resume, design: { ...resume.design, template: "classic" } } });
 }
 function MinimalResume({ resume }: ResumeTemplateProps) {
-  return <ResumeOverview resume={{ ...resume, design: { ...resume.design, template: "minimal" } }} />;
+  return createElement(ResumeOverview, { resume: { ...resume, design: { ...resume.design, template: "minimal" } } });
 }
 function ExecutiveResume({ resume }: ResumeTemplateProps) {
-  return <ResumeOverview resume={{ ...resume, design: { ...resume.design, template: "executive" } }} />;
+  return createElement(ResumeOverview, { resume: { ...resume, design: { ...resume.design, template: "executive" } } });
 }
 
 export const resumeTemplates: ResumeTemplateDefinition[] = [
