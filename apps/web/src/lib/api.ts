@@ -4,11 +4,39 @@ const API_URL =
   process.env.RESUMEFORGE_API_URL ??
   "http://localhost:8000";
 
+const OWNER_KEY_STORAGE = "resumeforge:owner-key";
+
+function browserOwnerKey(): string {
+  let key = window.localStorage.getItem(OWNER_KEY_STORAGE);
+  if (!key || !/^[0-9a-f]{64}$/.test(key)) {
+    key = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+      .map((n) => n.toString(16).padStart(2, "0"))
+      .join("");
+    window.localStorage.setItem(OWNER_KEY_STORAGE, key);
+  }
+  return key;
+}
+
 export async function apiFetch(
   path: string,
   init?: RequestInit,
 ): Promise<Response> {
-  return fetch(`${API_URL}${path}`, init);
+  if (typeof window === "undefined") {
+    return fetch(`${API_URL}${path}`, init);
+  }
+  // All browser CRUD requests are same-origin, with an ownership capability.
+  // The internal upstream API URL is never loaded from the browser environment.
+  if (!path.startsWith("/api/v1/resumes")) {
+    throw new Error("Unsupported browser API path");
+  }
+  const suffix = path.slice("/api/v1/resumes".length);
+  const headers = new Headers(init?.headers);
+  headers.set("X-Resume-Key", browserOwnerKey());
+  return fetch(`/api/resumes${suffix}`, {
+    ...init,
+    headers,
+    cache: "no-store",
+  });
 }
 
 export async function getDemoResume(): Promise<Resume> {
