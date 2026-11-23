@@ -70,15 +70,15 @@ def test_word_export_preserves_paper_format(paper, width, height):
 
 def test_word_export_includes_custom_section_items():
     resume = sample_resume()
-    resume.customSections = [
+    payload = resume.model_dump()
+    payload["customSections"] = [
         {
             "id": "speaking",
             "title": "Conference Talks",
             "items": ["<strong>Cloud Architecture</strong> — DevConf 2026", "Platform Reliability"],
         }
     ]
-    # Validate through Pydantic, like the API endpoint does.
-    resume = Resume.model_validate(resume.model_dump())
+    resume = Resume.model_validate(payload)
     response = export_route.export_word(resume)
     document = Document(BytesIO(response.body))
     text = "\n".join(paragraph.text for paragraph in document.paragraphs)
