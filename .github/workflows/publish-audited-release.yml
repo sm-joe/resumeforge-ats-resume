@@ -1,0 +1,60 @@
+name: Publish Audited Stable Release
+
+on:
+  workflow_run:
+    workflows:
+      - Release Security & Docker Validation
+    types:
+      - completed
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: resumeforge-stable-v1.0.0-publication
+  cancel-in-progress: false
+
+jobs:
+  dispatch-stable-audit-and-publish:
+    name: Dispatch Verified Stable Publication
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'release/v1.0.0-candidate'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Current Main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Require Exact Audited Source Commit
+        env:
+          AUDITED_SHA: ${{ github.event.workflow_run.head_sha }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          main_sha="$(git rev-parse HEAD)"
+          if [[ "$AUDITED_SHA" != "$main_sha" ]]; then
+            echo "Release audit did not cover current main ($AUDITED_SHA vs $main_sha)"
+            exit 1
+          fi
+          if gh release view v1.0.0 --repo "$REPO" >/dev/null 2>&1; then
+            echo "v1.0.0 already exists; refuse duplicate publication"
+            exit 1
+          fi
+          echo "Validated exact release candidate commit: $AUDITED_SHA"
+
+      - name: Dispatch Final Main Audit With Publication Enabled
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh workflow run release-validation.yml \
+            --repo "$REPO" \
+            --ref main \
+            -f publish=true \
+            -f release_tag=v1.0.0
