@@ -219,6 +219,12 @@ uv sync --directory apps/api
 uv run --directory apps/api uvicorn resumeforge_api.main:app --reload --port 8000
 ```
 
+## Concurrent Editing Protection
+
+Each saved resume now carries a positive integer `metadata.revision` assigned by the API. Updates must supply the revision last observed by that editor. The backend compares and advances it in one conditional database update, returning **409 Conflict** for stale writes and **428 Precondition Required** if no revision is supplied. The web app tracks revisions separately per browser tab and displays save errors rather than silently overwriting newer data.
+
+When a conflict is shown, preserve a JSON backup of the local draft from the dashboard before reopening the latest server copy. Revision enforcement prevents silent overwrites, but it does not automatically merge edits across tabs or devices.
+
 ## Resume Privacy And Ownership (M1 Development)
 
 ResumeForge currently uses a **browser-held, random 256-bit capability key** to isolate private resume records. The browser stores the key in local storage and sends it through the Next.js same-origin resume proxy. The API stores only a SHA-256 hash of this key and restricts listing, reading, editing and deleting to matching records. The shared demo resume remains read-only.
