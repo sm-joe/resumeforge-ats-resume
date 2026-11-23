@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 import { AtsScorePanel } from "@/components/ats/AtsScorePanel";
 import { JdMatchPanel } from "@/components/matching/JdMatchPanel";
@@ -217,7 +218,12 @@ export function ResumeWorkspace() {
             </p>
           </div>
 
-          <ExportActions />
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
+            <Link href="/resumes" style={{ color: "#304f43", fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 4 }}>
+              My Resumes
+            </Link>
+            <ExportActions />
+          </div>
         </header>
 
         <div
