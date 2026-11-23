@@ -83,7 +83,7 @@ export function ResumeOverview({
               >
                 {index > 0 ? " • " : ""}
 
-                {/^https?:\\/\\//i.test(link.url) ? (
+                {/^https?:\/\//i.test(link.url) ? (
                   <a href={link.url} target="_blank" rel="noopener noreferrer">
                     {link.label || link.url}
                   </a>
