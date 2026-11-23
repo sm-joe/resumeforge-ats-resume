@@ -229,6 +229,12 @@ This is **single-browser self-hosting isolation**, not a replacement for account
 
 The Compose configuration binds the API debug port to `127.0.0.1:8000` rather than exposing it on all host interfaces. The web application proxies private resume CRUD through `/api/resumes`.
 
+## Resume Dashboard, Recovery And Backup
+
+At `/resumes`, you can create, open, rename, duplicate, and delete resumes. Download a JSON backup without the private ownership key using **Export Backup**. Restore resume contents using **Import JSON**; imported records are schema-validated and assigned new private IDs to prevent overwriting existing work. Use **Version History** in the editor to restore locally saved snapshots.
+
+A JSON backup contains personal resume information: store it securely. Import/export of the browser's private ownership key is intentionally **not** supported; imported resumes become accessible under the current browser key. Version snapshots are stored only in browser localStorage (up to 50 entries), which is not a substitute for regular backups.
+
 ## Resume Persistence
 
 ResumeForge uses two persistence layers.

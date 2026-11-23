@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Resume } from "@resumeforge/resume-schema";
-import { createResume, deleteResume, listResumes } from "@/lib/api";
+import { createResume, deleteResume, listResumes, updateResume } from "@/lib/api";
+import { ResumeSchema, type Resume } from "@resumeforge/resume-schema";
 
 const ACTIVE_DRAFT_KEY = "resumeforge:resume:draft";
 
@@ -132,6 +132,75 @@ export function ResumeDashboard() {
     });
   }
 
+  function rename(resume: Resume) {
+    const title = window.prompt("Resume title", resume.metadata.title)?.trim();
+    if (!title || title === resume.metadata.title) return;
+    if (title.length > 120) {
+      setError("Resume title must be at most 120 characters.");
+      return;
+    }
+    void run(async () => {
+      const saved = await updateResume(resume.metadata.id, {
+        ...resume,
+        metadata: { ...resume.metadata, title, updatedAt: new Date().toISOString() },
+      });
+      setResumes((current) => current.map((r) =>
+        r.metadata.id === saved.metadata.id ? saved : r,
+      ));
+      try {
+        const draft = JSON.parse(localStorage.getItem(ACTIVE_DRAFT_KEY) || "null") as Resume | null;
+        if (draft?.metadata.id === saved.metadata.id) {
+          localStorage.setItem(ACTIVE_DRAFT_KEY, JSON.stringify(saved));
+        }
+      } catch {
+        // Corrupt draft storage should not prevent a server-side rename.
+      }
+    });
+  }
+
+  function downloadBackup() {
+    // Resume data only; the ownership key is intentionally not exported.
+    const backup = { schemaVersion: 1, exportedAt: new Date().toISOString(), resumes };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], {
+      type: "application/json",
+    }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "resumeforge-backup.json";
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  async function importBackup(file: File) {
+    await run(async () => {
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error("Import file exceeds the 5 MB limit.");
+      }
+      const payload: unknown = JSON.parse(await file.text());
+      // Accept a single resume or an exported backup, but always validate
+      // against the shared schema and allocate new private IDs.
+      const raw: unknown[] = (
+        payload && typeof payload === "object" && "resumes" in payload &&
+        Array.isArray((payload as { resumes: unknown }).resumes)
+      ) ? (payload as { resumes: unknown[] }).resumes : [payload];
+      if (raw.length > 30) throw new Error("Import is limited to 30 resumes at a time.");
+      const validated = raw.map((item) => ResumeSchema.parse(item));
+      const imported: Resume[] = [];
+      for (const resume of validated) {
+        const copy: Resume = {
+          ...resume,
+          metadata: {
+            ...resume.metadata,
+            id: crypto.randomUUID(),
+            updatedAt: new Date().toISOString(),
+          },
+        };
+        imported.push(await createResume(copy));
+      }
+      setResumes((current) => [...imported, ...current]);
+    });
+  }
+
   function remove(resume: Resume) {
     if (!window.confirm(`Permanently delete "${resume.metadata.title}"? This cannot be undone.`)) return;
     void run(async () => {
@@ -162,7 +231,19 @@ export function ResumeDashboard() {
             <h1 style={{ fontSize: "clamp(26px, 4vw, 38px)", color: "#1d2939", margin: "8px 0" }}>My Resumes</h1>
             <p style={{ color: "#667085", margin: 0 }}>Manage your private drafts and create role-specific copies.</p>
           </div>
-          <button type="button" style={{ ...actionStyle, backgroundColor: "#304f43", color: "#fff" }} disabled={busy} onClick={createNew}>+ New Resume</button>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+            <button type="button" style={actionStyle} disabled={busy || loading} onClick={downloadBackup}>Export Backup</button>
+            <label style={{ ...actionStyle, display: "inline-block" }}>
+              Import JSON
+              <input type="file" accept=".json,application/json" disabled={busy} style={{ display: "none" }}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void importBackup(file);
+                  event.target.value = "";
+                }} />
+            </label>
+            <button type="button" style={{ ...actionStyle, backgroundColor: "#304f43", color: "#fff" }} disabled={busy} onClick={createNew}>+ New Resume</button>
+          </div>
         </header>
 
         <p style={{ fontSize: 13, color: "#667085", marginBottom: 20 }}>
@@ -188,6 +269,7 @@ export function ResumeDashboard() {
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                   <button type="button" disabled={busy} style={{ ...actionStyle, backgroundColor: "#edf3ef", borderColor: "#cbd8d1" }} onClick={() => activate(resume)}>Open</button>
                   <button type="button" disabled={busy} style={actionStyle} onClick={() => duplicate(resume)}>Duplicate</button>
+                  <button type="button" disabled={busy} style={actionStyle} onClick={() => rename(resume)}>Rename</button>
                   <button type="button" disabled={busy} style={{ ...actionStyle, color: "#b42318" }} onClick={() => remove(resume)}>Delete</button>
                 </div>
               </article>
