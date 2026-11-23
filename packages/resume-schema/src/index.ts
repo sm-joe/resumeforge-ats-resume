@@ -91,6 +91,7 @@ export const ResumeSchema = z.object({
     id: z.string(),
     title: z.string().default("Untitled Resume"),
     updatedAt: z.string(),
+    revision: z.number().int().positive().optional(),
   }),
 
     design: ResumeDesignSchema.default({
