@@ -85,3 +85,23 @@ def test_word_export_includes_custom_section_items():
     assert "CONFERENCE TALKS" in text
     assert "Cloud Architecture" in text
     assert "Platform Reliability" in text
+
+
+@pytest.mark.parametrize(
+    ("template", "font"),
+    [
+        ("modern", "Arial"),
+        ("classic", "Times New Roman"),
+        ("minimal", "Arial"),
+        ("executive", "Times New Roman"),
+    ],
+)
+def test_docx_respects_selected_resume_template(template, font):
+    resume = sample_resume()
+    resume.design.template = template
+    response = export_route.export_word(resume)
+    document = Document(BytesIO(response.body))
+    assert document.styles["Normal"].font.name == font
+    text = "\n".join(paragraph.text for paragraph in document.paragraphs)
+    assert "Jane Example" in text
+    assert "Built reliable applications." in text
