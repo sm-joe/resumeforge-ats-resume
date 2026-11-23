@@ -65,7 +65,10 @@ def test_other_owner_cannot_access_resume(action):
 
 def test_owner_can_update_and_delete():
     routes.create_resume(resume(), owner_key=OWNER_A)
-    routes.update_resume("owned-001", resume(title="Revised"), owner_key=OWNER_A)
+    latest = routes.get_resume("owned-001", owner_key=OWNER_A)
+    latest.metadata.title = "Revised"
+    saved = routes.update_resume("owned-001", latest, owner_key=OWNER_A)
+    assert saved.metadata.revision == 2
     assert routes.get_resume("owned-001", owner_key=OWNER_A).metadata.title == "Revised"
     routes.delete_resume("owned-001", owner_key=OWNER_A)
     assert routes.list_resumes(owner_key=OWNER_A) == []
@@ -94,3 +97,26 @@ def test_legacy_resume_without_design_receives_defaults():
     loaded = Resume.model_validate(payload)
     assert loaded.design.template == "modern"
     assert loaded.design.pageSize == "A4"
+
+
+def test_stale_write_is_rejected_without_overwriting_latest_revision():
+    routes.create_resume(resume("concurrent"), owner_key=OWNER_A)
+    old_copy = routes.get_resume("concurrent", owner_key=OWNER_A)
+    current = routes.get_resume("concurrent", owner_key=OWNER_A)
+    current.metadata.title = "Newer Edit"
+    saved = routes.update_resume("concurrent", current, owner_key=OWNER_A)
+    assert saved.metadata.revision == 2
+    old_copy.metadata.title = "Stale Edit"
+    with pytest.raises(HTTPException) as error:
+        routes.update_resume("concurrent", old_copy, owner_key=OWNER_A)
+    assert error.value.status_code == 409
+    actual = routes.get_resume("concurrent", owner_key=OWNER_A)
+    assert actual.metadata.title == "Newer Edit"
+    assert actual.metadata.revision == 2
+
+
+def test_update_requires_explicit_revision():
+    routes.create_resume(resume("revision-required"), owner_key=OWNER_A)
+    with pytest.raises(HTTPException) as error:
+        routes.update_resume("revision-required", resume("revision-required"), owner_key=OWNER_A)
+    assert error.value.status_code == 428
