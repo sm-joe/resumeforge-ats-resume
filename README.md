@@ -322,6 +322,12 @@ Match Results
 
 This is intended to help users identify alignment between their resume and a target role.
 
+## Professional Resume Templates
+
+The editor offers four single-column, selectable templates: **Modern**, **Classic**, **Minimal**, and **Executive**. The chosen template is stored with the structured resume and changes typography and section styling in the live preview and downloadable PDF/DOCX. All variants preserve a linear text reading order; decorative layouts that may hinder parsing are intentionally avoided.
+
+The templates are designed for readability but **no template can guarantee acceptance by an employer's applicant-tracking system**. Always review the downloaded PDF/Word document before applying.
+
 ## Word Export
 
 ResumeForge supports Microsoft Word export through the API.
