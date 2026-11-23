@@ -110,3 +110,30 @@ export async function deleteResume(
     );
   }
 }
+
+/**
+ * Save an existing resume or create a new record for a first-time draft.
+ * Other errors are propagated rather than silently creating duplicates.
+ */
+export async function saveResume(
+  resume: Resume,
+): Promise<Resume> {
+  const response = await apiFetch(
+    `/api/v1/resumes/${encodeURIComponent(resume.metadata.id)}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(resume),
+    },
+  );
+
+  if (response.status === 404) {
+    return createResume(resume);
+  }
+
+  if (!response.ok) {
+    throw new Error(`Failed to save resume: ${response.status}`);
+  }
+
+  return response.json() as Promise<Resume>;
+}
