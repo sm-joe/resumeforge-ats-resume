@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ResumeForge Web
 
-## Getting Started
+The Next.js 16 / React / TypeScript interface for editing resumes, previewing professional templates, inspecting resume quality, matching job descriptions and exporting PDF/DOCX.
 
-First, run the development server:
+## Develop Locally
+
+Start the FastAPI service first (instructions in [API README](../api/README.md)). Then run:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm ci --prefix packages/resume-schema
+npm run build --prefix packages/resume-schema
+npm ci --prefix apps/web
+npm run dev --prefix apps/web
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`. For self-hosted containers set `RESUMEFORGE_API_URL=http://api:8000`; local development defaults to `http://localhost:8000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Key Routes
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `/`: editor, live preview, four resume layouts, quality/matching panels and PDF/DOCX export.
+- `/resumes`: create, open, rename, duplicate, delete, JSON backup and import.
+- `/api/resumes/*`: same-origin, bounded CRUD proxy that forwards the browser's capability key to FastAPI.
+- `/api/analyze`, `/api/match`, `/api/export/word`: Next.js proxy endpoints.
 
-## Learn More
+Browser localStorage holds the active draft and version snapshots. A random ownership key is stored separately; keep browser storage private and back up resumes before clearing it. Each tab tracks optimistic update revisions; stale edits are rejected and shown as a save conflict.
 
-To learn more about Next.js, take a look at the following resources:
+## Checks
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run build --prefix apps/web
+npm run typecheck --prefix apps/web
+npm run lint --prefix apps/web
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Playwright acceptance tests run against a full Compose deployment in the **manual release validation workflow**. See [Operations Guide](../../docs/operations.md) and root [README](../../README.md).
