@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from sqlalchemy import JSON, DateTime, String, create_engine
+from sqlalchemy import JSON, DateTime, String, create_engine, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
 
@@ -28,6 +28,7 @@ class ResumeRecord(Base):
         String(255),
         primary_key=True,
     )
+    owner_key_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     title: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
@@ -63,4 +64,15 @@ SessionLocal = sessionmaker(
 
 
 def init_db() -> None:
+    # Upgrade existing SQLite databases without discarding legacy data.
+    # Ownerless records cannot be accessed via the public resume endpoints.
+    with engine.begin() as connection:
+        columns = {
+            row[1]
+            for row in connection.execute(text("PRAGMA table_info(resumes)"))
+        }
+        if columns and "owner_key_hash" not in columns:
+            connection.execute(
+                text("ALTER TABLE resumes ADD COLUMN owner_key_hash VARCHAR(64)")
+            )
     Base.metadata.create_all(bind=engine)
