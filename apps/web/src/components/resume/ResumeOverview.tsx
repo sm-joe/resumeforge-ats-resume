@@ -83,13 +83,13 @@ export function ResumeOverview({
               >
                 {index > 0 ? " • " : ""}
 
-                <a
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {link.label || link.url}
-                </a>
+                {/^https?:\\/\\//i.test(link.url) ? (
+                  <a href={link.url} target="_blank" rel="noopener noreferrer">
+                    {link.label || link.url}
+                  </a>
+                ) : (
+                  <span>{link.label || link.url}</span>
+                )}
               </span>
             ))}
           </div>
